@@ -1,0 +1,129 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/movie.dart';
+import '../../domain/entities/movie_detail.dart';
+import '../../domain/entities/cast.dart';
+import '../../domain/repositories/movie_repository.dart';
+import '../../core/network/api_result.dart';
+import '../../data/repositories/movie_repository_impl.dart';
+import '../../data/datasources/remote/movie_remote_datasource.dart';
+
+// Provider for movie repository
+final movieRepositoryProvider = Provider<MovieRepository>((ref) {
+  return MovieRepositoryImpl(MovieRemoteDataSource());
+});
+
+// State classes
+class MovieDetailState {
+  final MovieDetail? movieDetail;
+  final List<Cast> cast;
+  final List<Movie> similarMovies;
+  final bool isLoadingDetail;
+  final bool isLoadingCast;
+  final bool isLoadingSimilar;
+  final String? errorDetail;
+  final String? errorCast;
+  final String? errorSimilar;
+
+  const MovieDetailState({
+    this.movieDetail,
+    this.cast = const [],
+    this.similarMovies = const [],
+    this.isLoadingDetail = false,
+    this.isLoadingCast = false,
+    this.isLoadingSimilar = false,
+    this.errorDetail,
+    this.errorCast,
+    this.errorSimilar,
+  });
+
+  MovieDetailState copyWith({
+    MovieDetail? movieDetail,
+    List<Cast>? cast,
+    List<Movie>? similarMovies,
+    bool? isLoadingDetail,
+    bool? isLoadingCast,
+    bool? isLoadingSimilar,
+    String? errorDetail,
+    String? errorCast,
+    String? errorSimilar,
+  }) {
+    return MovieDetailState(
+      movieDetail: movieDetail ?? this.movieDetail,
+      cast: cast ?? this.cast,
+      similarMovies: similarMovies ?? this.similarMovies,
+      isLoadingDetail: isLoadingDetail ?? this.isLoadingDetail,
+      isLoadingCast: isLoadingCast ?? this.isLoadingCast,
+      isLoadingSimilar: isLoadingSimilar ?? this.isLoadingSimilar,
+      errorDetail: errorDetail ?? this.errorDetail,
+      errorCast: errorCast ?? this.errorCast,
+      errorSimilar: errorSimilar ?? this.errorSimilar,
+    );
+  }
+}
+
+// Movie Detail Provider
+class MovieDetailNotifier extends StateNotifier<MovieDetailState> {
+  final MovieRepository _repository;
+
+  MovieDetailNotifier(this._repository) : super(const MovieDetailState());
+
+  Future<void> loadMovieDetails(int movieId) async {
+    state = state.copyWith(isLoadingDetail: true, errorDetail: null);
+
+    final result = await _repository.getMovieDetails(movieId);
+
+    switch (result) {
+      case Success(data: final movieDetail):
+        state = state.copyWith(
+          movieDetail: movieDetail,
+          cast: movieDetail.cast,
+          isLoadingDetail: false,
+        );
+        break;
+      case Failure(message: final message):
+        state = state.copyWith(
+          isLoadingDetail: false,
+          errorDetail: message,
+        );
+        break;
+    }
+  }
+
+  Future<void> loadSimilarMovies(int movieId) async {
+    state = state.copyWith(isLoadingSimilar: true, errorSimilar: null);
+
+    final result = await _repository.getSimilarMovies(movieId);
+
+    switch (result) {
+      case Success(data: final movies):
+        state = state.copyWith(
+          similarMovies: movies,
+          isLoadingSimilar: false,
+        );
+        break;
+      case Failure(message: final message):
+        state = state.copyWith(
+          isLoadingSimilar: false,
+          errorSimilar: message,
+        );
+        break;
+    }
+  }
+
+  Future<void> loadAllMovieData(int movieId) async {
+    await Future.wait([
+      loadMovieDetails(movieId),
+      loadSimilarMovies(movieId),
+    ]);
+  }
+
+  void reset() {
+    state = const MovieDetailState();
+  }
+}
+
+// Provider for movie detail
+final movieDetailProvider = StateNotifierProvider<MovieDetailNotifier, MovieDetailState>((ref) {
+  final repository = ref.watch(movieRepositoryProvider);
+  return MovieDetailNotifier(repository);
+});

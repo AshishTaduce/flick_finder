@@ -55,9 +55,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   error: homeState.nowPlayingError,
                   onRetry: () =>
                       ref.read(homeProvider.notifier).getNowPlayingMovies(),
-                  onSeeAll: () {
-                    // TODO: Navigate to now playing list
-                  },
                 ),
 
                 const SizedBox(height: AppInsets.xl),
@@ -70,9 +67,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   error: homeState.trendingError,
                   onRetry: () =>
                       ref.read(homeProvider.notifier).getTrendingMovies(),
-                  onSeeAll: () {
-                    // TODO: Navigate to trending list
-                  },
                 ),
 
                 const SizedBox(height: AppInsets.xxl),

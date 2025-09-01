@@ -1,6 +1,8 @@
 import '../../core/network/api_result.dart';
 import '../../domain/entities/filter_options.dart';
 import '../../domain/entities/movie.dart';
+import '../../domain/entities/movie_detail.dart';
+import '../../domain/entities/cast.dart';
 import '../../domain/repositories/movie_repository.dart';
 import '../datasources/remote/movie_remote_datasource.dart';
 
@@ -124,6 +126,60 @@ class MovieRepositoryImpl implements MovieRepository {
       };
     } catch (e) {
       return Failure('Discovery failed: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<ApiResult<MovieDetail>> getMovieDetails(int movieId) async {
+    try {
+      final detailResult = await _remoteDataSource.getMovieDetails(movieId);
+      final creditsResult = await _remoteDataSource.getMovieCredits(movieId);
+
+      return switch (detailResult) {
+        Success(data: final detailModel) => switch (creditsResult) {
+          Success(data: final creditsModel) => Success(
+            detailModel.toEntity(cast: creditsModel.cast),
+          ),
+          Failure(message: final _, code: final _) => Success(
+            detailModel.toEntity(), // Return without cast if credits fail
+          ),
+        },
+        Failure(message: final message, code: final code) => Failure(message, code: code),
+      };
+    } catch (e) {
+      return Failure('Failed to get movie details: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<ApiResult<List<Cast>>> getMovieCredits(int movieId) async {
+    try {
+      final result = await _remoteDataSource.getMovieCredits(movieId);
+
+      return switch (result) {
+        Success(data: final creditsModel) => Success(
+          creditsModel.cast.map((model) => model.toEntity()).toList(),
+        ),
+        Failure(message: final message, code: final code) => Failure(message, code: code),
+      };
+    } catch (e) {
+      return Failure('Failed to get movie credits: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<ApiResult<List<Movie>>> getSimilarMovies(int movieId, {int page = 1}) async {
+    try {
+      final result = await _remoteDataSource.getSimilarMovies(movieId, page: page);
+
+      return switch (result) {
+        Success(data: final response) => Success(
+          response.results.map((model) => model.toEntity()).toList(),
+        ),
+        Failure(message: final message, code: final code) => Failure(message, code: code),
+      };
+    } catch (e) {
+      return Failure('Failed to get similar movies: ${e.toString()}');
     }
   }
 }

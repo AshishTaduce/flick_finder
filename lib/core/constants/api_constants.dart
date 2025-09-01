@@ -15,6 +15,9 @@ class ApiConstants {
   static const String discoverTv = '/discover/tv';
   static const String genreMovieList = '/genre/movie/list';
   static const String genreTvList = '/genre/tv/list';
+  static const String movieDetails = '/movie'; // /movie/{movie_id}
+  static const String movieCredits = '/movie'; // /movie/{movie_id}/credits
+  static const String similarMovies = '/movie'; // /movie/{movie_id}/similar
 
   // TMDB Genre IDs mapping
   static const Map<String, int> movieGenreIds = {
