@@ -1,4 +1,5 @@
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_result.dart';
@@ -138,6 +139,46 @@ class SearchNotifier extends StateNotifier<SearchState> {
         filteredResults: [],
       );
     }
+  }
+
+  void removeCategory(String category) {
+    final newCategories = List<String>.from(state.filters.selectedCategories);
+    newCategories.remove(category);
+    final newFilters = state.filters.copyWith(selectedCategories: newCategories);
+    updateFilters(newFilters);
+  }
+
+  void removeGenre(String genre) {
+    final newGenres = List<String>.from(state.filters.selectedGenres);
+    newGenres.remove(genre);
+    final newFilters = state.filters.copyWith(selectedGenres: newGenres);
+    updateFilters(newFilters);
+  }
+
+  void clearYearRange() {
+    const defaultRange = RangeValues(2000, 2025);
+    final newFilters = state.filters.copyWith(yearRange: defaultRange);
+    updateFilters(newFilters);
+  }
+
+  void clearRating() {
+    final newFilters = state.filters.copyWith(minRating: 0.0);
+    updateFilters(newFilters);
+  }
+
+  void resetSort() {
+    final newFilters = state.filters.copyWith(sortBy: 'popularity.desc');
+    updateFilters(newFilters);
+  }
+
+  void clearAdultContent() {
+    final newFilters = state.filters.copyWith(includeAdult: false);
+    updateFilters(newFilters);
+  }
+
+  void clearRegion() {
+    final newFilters = state.filters.copyWith(region: '');
+    updateFilters(newFilters);
   }
 }
 
