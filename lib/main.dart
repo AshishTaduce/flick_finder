@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/search/search_screen.dart';
+import 'presentation/screens/profile/profile_screen.dart';
 import 'presentation/widgets/nav_bar_item.dart';
+import 'presentation/widgets/auth_wrapper.dart';
 import 'shared/theme/app_insets.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -33,7 +35,7 @@ class MyApp extends StatelessWidget {
         extensions: [MovieThemeExtension.dark],
       ),
       themeMode: ThemeMode.system,
-      home: const MainScreen(),
+      home: const AuthWrapper(child: MainScreen()),
     );
   }
 }
@@ -60,14 +62,17 @@ class _MainScreenState extends State<MainScreen> {
       HomeScreen(onNavigateToSearch: () => _navigateToTab(1)),
       const SearchScreen(),
       const Center(child: Text('Discover')), // Placeholder
-      const Center(child: Text('Profile')), // Placeholder
+      const ProfileScreen(),
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: screens),
+      body: Padding(
+        padding: EdgeInsets.only(bottom: AppInsets.xxl),
+        child: IndexedStack(index: _currentIndex, children: screens),
+      ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,
-          // Navigation Bar
+      // Navigation Bar
       floatingActionButton: Container(
         margin: const EdgeInsets.symmetric(
           // horizontal: AppInsets.lg,
@@ -108,8 +113,8 @@ class _MainScreenState extends State<MainScreen> {
                     onTap: () => _navigateToTab(1),
                   ),
                   NavBarItem(
-                    icon: Icons.explore,
-                    label: "Discover",
+                    icon: Icons.playlist_play,
+                    label: "Watch List",
                     isActive: _currentIndex == 2,
                     onTap: () => _navigateToTab(2),
                   ),

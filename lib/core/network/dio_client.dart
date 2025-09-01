@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
 import '../constants/api_constants.dart';
+import '../services/auth_service.dart';
 
 class DioClient {
   static Dio? _instance;
@@ -63,10 +64,20 @@ class DioClient {
 
     dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (options, handler) {
+        onRequest: (options, handler) async {
           options.queryParameters['api_key'] = ApiConstants.apiKey;
+          
+          // Add authentication token if available
+          final token = await AuthService.instance.getToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          
           if (kDebugMode) {
             debugPrint('Request: ${options.method} ${options.path}');
+            if (token != null) {
+              debugPrint('Auth token included: ${token.substring(0, 10)}...');
+            }
           }
           handler.next(options);
         },

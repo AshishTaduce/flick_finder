@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/theme/app_insets.dart';
 import '../../providers/home_provider.dart';
+import '../../widgets/auth_status_widget.dart';
 import 'widgets/movie_carousel.dart';
 import 'widgets/horizontal_movie_list.dart';
 
@@ -36,6 +37,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Auth Status
+                Padding(
+                  padding: const EdgeInsets.all(AppInsets.md),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Flick Finder',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const AuthStatusWidget(),
+                    ],
+                  ),
+                ),
+                
                 // Popular Movies Carousel
                 MovieCarousel(
                   movies: homeState.popularMovies,
