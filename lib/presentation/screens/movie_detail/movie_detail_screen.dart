@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -123,7 +124,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
 
           const SizedBox(height: AppInsets.sm),
 
-          // Subtitle with year and rating
+          // Subtitle with years and runtime
           Row(
             children: [
               Text(
@@ -139,56 +140,29 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                 const SizedBox(width: AppInsets.md),
                 Text(
                   movieDetail!.formattedRuntime,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.brightness == Brightness.dark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                  ),
+                  style: theme.textTheme.bodyLarge,
                 ),
               ],
-              const SizedBox(width: AppInsets.md),
-              const Icon(Icons.star, color: AppColors.ratingGold, size: 18),
-              const SizedBox(width: AppInsets.xs),
-              Text(
-                (movieDetail?.rating ?? widget.movie.rating).toStringAsFixed(1),
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: AppTypography.semiBold,
-                ),
-              ),
             ],
           ),
 
           const SizedBox(height: AppInsets.lg),
 
           // Action buttons
-          Column(
-            children: [
-              // Watch button (full width, primary)
-              SizedBox(
-                width: double.infinity,
-                child: _buildPrimeActionButton(
-                  icon: Icons.play_arrow,
-                  label: 'Watch Now',
-                  isPrimary: true,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Watch feature coming soon!'),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: AppInsets.sm),
-
-              // Secondary buttons row
-              Row(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppInsets.md),
+            decoration: BoxDecoration(
+              color: Theme.of(context).surfaceVariant,
+              borderRadius: BorderRadius.circular(AppInsets.radiusSm),
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: _buildPrimeActionButton(
-                      icon: Icons.add,
-                      label: 'Watchlist',
+                      icon: Icons.play_circle,
+                      label: 'Watch',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Added to watchlist!')),
@@ -196,11 +170,19 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(width: AppInsets.sm),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppInsets.md),
+                    child: VerticalDivider(
+                      color: Theme.of(context).appBarTheme.foregroundColor,
+                      width: 1,
+                      radius: BorderRadius.circular(AppInsets.radiusXxl),
+                      // height: 20,
+                    ),
+                  ),
                   Expanded(
                     child: _buildPrimeActionButton(
-                      icon: Icons.download,
-                      label: 'Download',
+                      icon: Icons.playlist_add,
+                      label: 'Add to List',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -210,10 +192,18 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(width: AppInsets.sm),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppInsets.md),
+                    child: VerticalDivider(
+                      color: Theme.of(context).appBarTheme.foregroundColor,
+                      width: 1,
+                      radius: BorderRadius.circular(AppInsets.radiusXxl),
+                      // height: 20,
+                    ),
+                  ),
                   Expanded(
                     child: _buildPrimeActionButton(
-                      icon: Icons.share,
+                      icon: Icons.offline_share,
                       label: 'Share',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -226,7 +216,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -237,10 +227,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    bool isPrimary = false,
   }) {
-    final theme = Theme.of(context);
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -248,49 +235,14 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
           horizontal: AppInsets.md,
           vertical: AppInsets.md,
         ),
-        decoration: BoxDecoration(
-          color: isPrimary
-              ? const Color(0xFF00A8E1) // Amazon Prime blue
-              : theme.brightness == Brightness.dark
-              ? const Color(0xFF2A2A2A)
-              : const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(AppInsets.radiusSm),
-          border: isPrimary
-              ? null
-              : Border.all(
-                  color: theme.brightness == Brightness.dark
-                      ? const Color(0xFF404040)
-                      : const Color(0xFFE0E0E0),
-                ),
-        ),
-        child: Row(
+        decoration: BoxDecoration(),
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isPrimary
-                  ? Colors.white
-                  : theme.brightness == Brightness.dark
-                  ? Colors.white
-                  : Colors.black87,
-              size: 20,
-            ),
-            const SizedBox(width: AppInsets.sm),
-            Text(
-              label,
-              style: TextStyle(
-                color: isPrimary
-                    ? Colors.white
-                    : theme.brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black87,
-                fontWeight: isPrimary
-                    ? AppTypography.bold
-                    : AppTypography.medium,
-                fontSize: 16,
-              ),
-            ),
+            Icon(icon, size: AppInsets.iconLg),
+            const SizedBox(height: AppInsets.xs),
+            Text(label, style: AppTypography.labelLarge),
           ],
         ),
       ),
@@ -379,7 +331,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
           ),
           _buildDetailRow(
             'Rating',
-            '${(movieDetail?.rating ?? widget.movie.rating).toStringAsFixed(1)}/10 (${movieDetail?.voteCount ?? widget.movie.voteCount} votes)',
+            '🌟 ${(movieDetail?.rating ?? widget.movie.rating).toStringAsFixed(1)}/10 (${movieDetail?.voteCount ?? widget.movie.voteCount} votes)',
             theme,
           ),
           if (movieDetail?.genres.isNotEmpty == true)
