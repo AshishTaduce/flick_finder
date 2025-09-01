@@ -75,7 +75,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildContent(SearchState state, ThemeData theme) {
-    if (state.query.isEmpty) {
+    if (state.query.isEmpty && !state.filters.hasActiveFilters) {
       return _buildEmptyState();
     }
 
