@@ -214,15 +214,25 @@ class MovieRemoteDataSource {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return 'Connection timeout';
+        return 'Connection timeout. Please check your internet connection and try again.';
       case DioExceptionType.badResponse:
-        return 'Server error: ${error.response?.statusCode}';
+        final statusCode = error.response?.statusCode;
+        if (statusCode == 429) {
+          return 'Too many requests. Please wait a moment and try again.';
+        } else if (statusCode != null && statusCode >= 500) {
+          return 'Server is temporarily unavailable. Please try again later.';
+        } else if (statusCode == 401) {
+          return 'Authentication failed. Please check your API key.';
+        } else if (statusCode == 404) {
+          return 'The requested content was not found.';
+        }
+        return 'Server error: $statusCode';
       case DioExceptionType.connectionError:
-        return 'No internet connection';
+        return 'No internet connection. Please check your network and try again.';
       case DioExceptionType.cancel:
-        return 'Request cancelled';
+        return 'Request was cancelled';
       default:
-        return 'Something went wrong';
+        return 'Something went wrong. Please try again.';
     }
   }
 }
