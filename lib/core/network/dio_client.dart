@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../constants/api_constants.dart';
 
 class DioClient {
@@ -25,11 +26,15 @@ class DioClient {
         handler.next(options);
       },
       onResponse: (response, handler) {
-        print('Response: ${response.statusCode} ${response.requestOptions.path}');
+        if (kDebugMode) {
+          debugPrint('Response: ${response.statusCode} ${response.requestOptions.path}');
+        }
         handler.next(response);
       },
       onError: (error, handler) {
-        print('Error: ${error.message}');
+        if (kDebugMode) {
+          debugPrint('Error: ${error.message}');
+        }
         handler.next(error);
       },
     ));
