@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../core/constants/api_constants.dart';
 import '../../../../domain/entities/movie.dart';
-import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_insets.dart';
 import '../../../../shared/theme/app_typography.dart';
-import '../../movie_detail/movie_detail_screen.dart';
+import '../../../../shared/widgets/movie_card.dart';
 
 class HorizontalMovieList extends StatelessWidget {
   final String title;
@@ -42,7 +39,6 @@ class HorizontalMovieList extends StatelessWidget {
                   fontWeight: AppTypography.bold,
                 ),
               ),
-
             ],
           ),
         ),
@@ -77,83 +73,13 @@ class HorizontalMovieList extends StatelessWidget {
       itemCount: movies.length,
       itemBuilder: (context, index) {
         final movie = movies[index];
-        return _buildMovieCard(context, movie, theme, index == movies.length - 1);
-      },
-    );
-  }
-
-  Widget _buildMovieCard(BuildContext context, Movie movie, ThemeData theme, bool isLast) {
-    final imageUrl = movie.posterPath != null
-        ? '${ApiConstants.imageBaseUrl}${movie.posterPath}'
-        : null;
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MovieDetailScreen(movie: movie),
+        return Container(
+          margin: EdgeInsets.only(
+            right: index == movies.length - 1 ? 0 : AppInsets.md,
           ),
+          child: MovieCard(movie: movie, width: 120, height: 180),
         );
       },
-      child: Container(
-        width: 120,
-        height: 180,
-        margin: EdgeInsets.only(right: isLast ? 0 : AppInsets.md),
-        child: Hero(
-          tag: 'movie_poster_${movie.id}',
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppInsets.radiusMd),
-              color: theme.brightness == Brightness.dark
-                  ? AppColors.darkSurfaceVariant
-                  : AppColors.lightSurfaceVariant,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppInsets.radiusMd),
-              child: imageUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      placeholder: (context, url) => Container(
-                        color: theme.brightness == Brightness.dark
-                            ? AppColors.darkSurfaceVariant
-                            : AppColors.lightSurfaceVariant,
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: theme.brightness == Brightness.dark
-                            ? AppColors.darkSurfaceVariant
-                            : AppColors.lightSurfaceVariant,
-                        child: const Center(
-                          child: Icon(Icons.error, size: 30),
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.movie, size: 40),
-                          const SizedBox(height: AppInsets.sm),
-                          Text(
-                            movie.title,
-                            style: theme.textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -171,9 +97,7 @@ class HorizontalMovieList extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppInsets.radiusMd),
             color: Colors.grey[300],
           ),
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: const Center(child: CircularProgressIndicator()),
         );
       },
     );
@@ -186,16 +110,10 @@ class HorizontalMovieList extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, size: 40),
           const SizedBox(height: AppInsets.md),
-          Text(
-            'Failed to load $title',
-            style: theme.textTheme.bodyLarge,
-          ),
+          Text('Failed to load $title', style: theme.textTheme.bodyLarge),
           const SizedBox(height: AppInsets.sm),
           if (onRetry != null)
-            ElevatedButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );
@@ -208,10 +126,7 @@ class HorizontalMovieList extends StatelessWidget {
         children: [
           const Icon(Icons.movie_outlined, size: 40),
           const SizedBox(height: AppInsets.md),
-          Text(
-            'No $title available',
-            style: theme.textTheme.bodyLarge,
-          ),
+          Text('No $title available', style: theme.textTheme.bodyLarge),
         ],
       ),
     );

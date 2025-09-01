@@ -23,4 +23,5 @@ abstract class MovieRepository {
   Future<ApiResult<MovieDetail>> getMovieDetails(int movieId);
   Future<ApiResult<List<Cast>>> getMovieCredits(int movieId);
   Future<ApiResult<List<Movie>>> getSimilarMovies(int movieId, {int page = 1});
+  Future<ApiResult<List<Movie>>> getPersonMovies(int personId, {int page = 1});
 }

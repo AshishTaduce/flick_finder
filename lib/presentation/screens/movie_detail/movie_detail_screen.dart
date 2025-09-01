@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import '../../../shared/theme/app_insets.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../home/widgets/horizontal_movie_list.dart';
 import '../../providers/movie_detail_provider.dart';
+import '../person_movies/person_movies_screen.dart';
 
 class MovieDetailScreen extends ConsumerStatefulWidget {
   final Movie movie;
@@ -424,46 +424,56 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
   }
 
   Widget _buildCastCard(Cast castMember, ThemeData theme, bool isLast) {
-    return Container(
-      width: 80,
-      margin: EdgeInsets.only(right: isLast ? 0 : AppInsets.md),
-      child: Column(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: theme.brightness == Brightness.dark
-                  ? AppColors.darkSurfaceVariant
-                  : AppColors.lightSurfaceVariant,
-            ),
-            child: ClipOval(
-              child: castMember.profilePath != null
-                  ? CachedNetworkImage(
-                      imageUrl: castMember.fullProfileUrl,
-                      fit: BoxFit.cover,
-                      width: 60,
-                      height: 60,
-                      placeholder: (context, url) =>
-                          const Icon(Icons.person, size: 30),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.person, size: 30),
-                    )
-                  : const Icon(Icons.person, size: 30),
-            ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PersonMoviesScreen(person: castMember),
           ),
-          const SizedBox(height: AppInsets.sm),
-          Text(
-            castMember.name,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: AppTypography.medium,
+        );
+      },
+      child: Container(
+        width: 80,
+        margin: EdgeInsets.only(right: isLast ? 0 : AppInsets.md),
+        child: Column(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.brightness == Brightness.dark
+                    ? AppColors.darkSurfaceVariant
+                    : AppColors.lightSurfaceVariant,
+              ),
+              child: ClipOval(
+                child: castMember.profilePath != null
+                    ? CachedNetworkImage(
+                        imageUrl: castMember.fullProfileUrl,
+                        fit: BoxFit.cover,
+                        width: 60,
+                        height: 60,
+                        placeholder: (context, url) =>
+                            const Icon(Icons.person, size: 30),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.person, size: 30),
+                      )
+                    : const Icon(Icons.person, size: 30),
+              ),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: AppInsets.sm),
+            Text(
+              castMember.name,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: AppTypography.medium,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

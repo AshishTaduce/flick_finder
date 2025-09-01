@@ -182,4 +182,20 @@ class MovieRepositoryImpl implements MovieRepository {
       return Failure('Failed to get similar movies: ${e.toString()}');
     }
   }
+
+  @override
+  Future<ApiResult<List<Movie>>> getPersonMovies(int personId, {int page = 1}) async {
+    try {
+      final result = await _remoteDataSource.getPersonMovies(personId, page: page);
+
+      return switch (result) {
+        Success(data: final response) => Success(
+          response.results.map((model) => model.toEntity()).toList(),
+        ),
+        Failure(message: final message, code: final code) => Failure(message, code: code),
+      };
+    } catch (e) {
+      return Failure('Failed to get person movies: ${e.toString()}');
+    }
+  }
 }

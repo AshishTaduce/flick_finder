@@ -135,7 +135,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
         // Results grid
         Expanded(
-          child: MovieGrid(movies: results),
+          child: MovieGrid(
+            movies: results,
+            crossAxisCount: 3,
+          ),
         ),
       ],
     );

@@ -185,6 +185,30 @@ class MovieRemoteDataSource {
     }
   }
 
+  Future<ApiResult<MovieResponseModel>> getPersonMovies(int personId, {int page = 1}) async {
+    try {
+      final response = await _dio.get(
+        '${ApiConstants.personMovies}/$personId/movie_credits',
+      );
+
+      // Transform the person credits response to match MovieResponseModel
+      final credits = response.data['cast'] as List<dynamic>;
+      final transformedData = {
+        'page': 1,
+        'results': credits,
+        'total_pages': 1,
+        'total_results': credits.length,
+      };
+
+      final movieResponse = MovieResponseModel.fromJson(transformedData);
+      return Success(movieResponse);
+    } on DioException catch (e) {
+      return Failure(_handleDioError(e));
+    } catch (e) {
+      return Failure('Unexpected error: ${e.toString()}');
+    }
+  }
+
   String _handleDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
