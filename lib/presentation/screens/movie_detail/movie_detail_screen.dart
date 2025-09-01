@@ -1,7 +1,6 @@
 import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../domain/entities/movie.dart';
 import '../../../domain/entities/movie_detail.dart';
@@ -9,6 +8,7 @@ import '../../../domain/entities/cast.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_insets.dart';
 import '../../../shared/theme/app_typography.dart';
+import '../../../shared/widgets/custom_image_widget.dart';
 import '../home/widgets/horizontal_movie_list.dart';
 import '../../providers/movie_detail_provider.dart';
 import '../person_movies/person_movies_screen.dart';
@@ -26,25 +26,9 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
   bool _isExpanded = false;
 
   @override
-  void initState() {
-    super.initState();
-    // Load movie details when screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(movieDetailProvider.notifier).loadAllMovieData(widget.movie.id);
-    });
-  }
-
-  @override
-  void dispose() {
-    // Reset the provider state when leaving the screen
-    ref.read(movieDetailProvider.notifier).reset();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final movieDetailState = ref.watch(movieDetailProvider);
+    final movieDetailState = ref.watch(movieDetailProvider(widget.movie.id));
     final movieDetail = movieDetailState.movieDetail;
 
     return Scaffold(
@@ -80,16 +64,10 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
           children: [
             // Backdrop image
             if (widget.movie.backdropPath != null)
-              CachedNetworkImage(
-                imageUrl:
-                    '${ApiConstants.imageBaseUrl}${widget.movie.backdropPath}',
+              CustomImageWidget(
+                imageUrl: '${ApiConstants.imageBaseUrl}${widget.movie.backdropPath}',
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: theme.brightness == Brightness.dark
-                      ? AppColors.darkSurfaceVariant
-                      : AppColors.lightSurfaceVariant,
-                ),
-                errorWidget: (context, url, error) => Container(
+                errorWidget: Container(
                   color: theme.brightness == Brightness.dark
                       ? AppColors.darkSurfaceVariant
                       : AppColors.lightSurfaceVariant,
@@ -448,18 +426,15 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                     : AppColors.lightSurfaceVariant,
               ),
               child: ClipOval(
-                child: castMember.profilePath != null
-                    ? CachedNetworkImage(
-                        imageUrl: castMember.fullProfileUrl,
-                        fit: BoxFit.cover,
-                        width: 60,
-                        height: 60,
-                        placeholder: (context, url) =>
-                            const Icon(Icons.person, size: 30),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.person, size: 30),
-                      )
-                    : const Icon(Icons.person, size: 30),
+                child: CustomImageWidget(
+                  imageUrl: castMember.profilePath != null ? castMember.fullProfileUrl : null,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  isCircular: true,
+                  placeholder: const Icon(Icons.person, size: 30),
+                  errorWidget: const Icon(Icons.person, size: 30),
+                ),
               ),
             ),
             const SizedBox(height: AppInsets.sm),
@@ -492,8 +467,8 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
           error: movieDetailState.errorSimilar,
           onRetry: () {
             ref
-                .read(movieDetailProvider.notifier)
-                .loadSimilarMovies(widget.movie.id);
+                .read(movieDetailProvider(widget.movie.id).notifier)
+                .loadSimilarMovies();
           },
         ),
       ],

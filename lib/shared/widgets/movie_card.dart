@@ -1,10 +1,11 @@
+import 'package:flick_finder/shared/theme/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/api_constants.dart';
 import '../../domain/entities/movie.dart';
 import '../../presentation/screens/movie_detail/movie_detail_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_insets.dart';
+import 'custom_image_widget.dart';
 
 class MovieCard extends StatelessWidget {
   final Movie movie;
@@ -48,27 +49,11 @@ class MovieCard extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppInsets.radiusMd),
             child: imageUrl != null
-                ? CachedNetworkImage(
+                ? CustomImageWidget(
                     imageUrl: imageUrl,
-                    fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
-                    placeholder: (context, url) => Container(
-                      color: theme.brightness == Brightness.dark
-                          ? AppColors.darkSurfaceVariant
-                          : AppColors.lightSurfaceVariant,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: theme.brightness == Brightness.dark
-                          ? AppColors.darkSurfaceVariant
-                          : AppColors.lightSurfaceVariant,
-                      child: const Center(
-                        child: Icon(Icons.error, size: 30),
-                      ),
-                    ),
+                    fit: BoxFit.cover,
                   )
                 : Center(
                     child: Column(
@@ -80,7 +65,7 @@ class MovieCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: AppInsets.sm),
                           child: Text(
                             movie.title,
-                            style: theme.textTheme.bodySmall,
+                            style: AppTypography.headlineSmall,
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

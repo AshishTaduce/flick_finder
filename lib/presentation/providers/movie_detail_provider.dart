@@ -64,10 +64,13 @@ class MovieDetailState {
 // Movie Detail Provider
 class MovieDetailNotifier extends StateNotifier<MovieDetailState> {
   final MovieRepository _repository;
+  final int movieId;
 
-  MovieDetailNotifier(this._repository) : super(const MovieDetailState());
+  MovieDetailNotifier(this._repository, this.movieId) : super(const MovieDetailState()) {
+    loadAllMovieData();
+  }
 
-  Future<void> loadMovieDetails(int movieId) async {
+  Future<void> loadMovieDetails() async {
     state = state.copyWith(isLoadingDetail: true, errorDetail: null);
 
     final result = await _repository.getMovieDetails(movieId);
@@ -89,7 +92,7 @@ class MovieDetailNotifier extends StateNotifier<MovieDetailState> {
     }
   }
 
-  Future<void> loadSimilarMovies(int movieId) async {
+  Future<void> loadSimilarMovies() async {
     state = state.copyWith(isLoadingSimilar: true, errorSimilar: null);
 
     final result = await _repository.getSimilarMovies(movieId);
@@ -110,20 +113,16 @@ class MovieDetailNotifier extends StateNotifier<MovieDetailState> {
     }
   }
 
-  Future<void> loadAllMovieData(int movieId) async {
+  Future<void> loadAllMovieData() async {
     await Future.wait([
-      loadMovieDetails(movieId),
-      loadSimilarMovies(movieId),
+      loadMovieDetails(),
+      loadSimilarMovies(),
     ]);
-  }
-
-  void reset() {
-    state = const MovieDetailState();
   }
 }
 
-// Provider for movie detail
-final movieDetailProvider = StateNotifierProvider<MovieDetailNotifier, MovieDetailState>((ref) {
+// Family provider for movie detail - each movie gets its own provider instance
+final movieDetailProvider = StateNotifierProvider.family<MovieDetailNotifier, MovieDetailState, int>((ref, movieId) {
   final repository = ref.watch(movieRepositoryProvider);
-  return MovieDetailNotifier(repository);
+  return MovieDetailNotifier(repository, movieId);
 });

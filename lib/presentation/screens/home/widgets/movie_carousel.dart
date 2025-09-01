@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../domain/entities/movie.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_insets.dart';
 import '../../../../shared/theme/app_typography.dart';
+import '../../../../shared/widgets/custom_image_widget.dart';
 
 class MovieCarousel extends StatefulWidget {
   final List<Movie> movies;
@@ -139,18 +139,10 @@ class _MovieCarouselState extends State<MovieCarousel> {
             : AppColors.lightSurfaceVariant,
       ),
       child: imageUrl != null
-          ? CachedNetworkImage(
+          ? CustomImageWidget(
               imageUrl: imageUrl,
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: theme.brightness == Brightness.dark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-              errorWidget: (context, url, error) => Container(
+              errorWidget: Container(
                 color: theme.brightness == Brightness.dark
                     ? AppColors.darkSurfaceVariant
                     : AppColors.lightSurfaceVariant,

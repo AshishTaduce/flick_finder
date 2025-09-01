@@ -87,7 +87,7 @@ class HorizontalMovieList extends StatelessWidget {
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       padding: AppInsets.screenPaddingHorizontal,
-      itemCount: 5, // Show 5 loading placeholders
+      itemCount: 5,
       itemBuilder: (context, index) {
         return Container(
           width: 120,
