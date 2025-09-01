@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/search/search_screen.dart';
+import 'presentation/widgets/nav_bar_item.dart';
 import 'shared/theme/app_insets.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -66,6 +67,7 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(index: _currentIndex, children: screens),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,
+          // Navigation Bar
       floatingActionButton: Container(
         margin: const EdgeInsets.symmetric(
           // horizontal: AppInsets.lg,
@@ -93,15 +95,29 @@ class _MainScreenState extends State<MainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.home),
-                      Text(
-                        "Home",
-                        style: TextStyle(color: Theme.of(context).primaryColor),
-                      ),
-                    ],
+                  NavBarItem(
+                    icon: Icons.home,
+                    label: "Home",
+                    isActive: _currentIndex == 0,
+                    onTap: () => _navigateToTab(0),
+                  ),
+                  NavBarItem(
+                    icon: Icons.search,
+                    label: "Search",
+                    isActive: _currentIndex == 1,
+                    onTap: () => _navigateToTab(1),
+                  ),
+                  NavBarItem(
+                    icon: Icons.explore,
+                    label: "Discover",
+                    isActive: _currentIndex == 2,
+                    onTap: () => _navigateToTab(2),
+                  ),
+                  NavBarItem(
+                    icon: Icons.person,
+                    label: "Profile",
+                    isActive: _currentIndex == 3,
+                    onTap: () => _navigateToTab(3),
                   ),
                 ],
               ),
