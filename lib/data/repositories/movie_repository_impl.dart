@@ -35,14 +35,32 @@ class MovieRepositoryImpl implements MovieRepository {
 
   @override
   Future<ApiResult<List<Movie>>> getNowPlayingMovies({int page = 1}) async {
-    // TODO: Implement
-    throw UnimplementedError();
+    final result = await _remoteDataSource.getNowPlayingMovies(page: page);
+
+    return switch (result) {
+      Success(data: final response) => Success(
+        response.results.map((model) => model.toEntity()).toList(),
+      ),
+      Failure(message: final message, code: final code) => Failure(message, code: code),
+    };
   }
 
   @override
   Future<ApiResult<List<Movie>>> getUpcomingMovies({int page = 1}) async {
     // TODO: Implement
     throw UnimplementedError();
+  }
+
+  @override
+  Future<ApiResult<List<Movie>>> getTrendingMovies({int page = 1}) async {
+    final result = await _remoteDataSource.getTrendingMovies(page: page);
+
+    return switch (result) {
+      Success(data: final response) => Success(
+        response.results.map((model) => model.toEntity()).toList(),
+      ),
+      Failure(message: final message, code: final code) => Failure(message, code: code),
+    };
   }
 
   @override

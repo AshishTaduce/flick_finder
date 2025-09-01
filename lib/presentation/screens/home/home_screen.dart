@@ -1,12 +1,14 @@
-import 'package:flick_finder/presentation/screens/home/widgets/error_widget.dart';
-import 'package:flick_finder/presentation/screens/home/widgets/loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/widgets/movie_grid.dart';
-import '../../providers/movie_provider.dart';
+import '../../../shared/theme/app_insets.dart';
+import '../../providers/home_provider.dart';
+import 'widgets/movie_carousel.dart';
+import 'widgets/horizontal_movie_list.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onNavigateToSearch;
+
+  const HomeScreen({super.key, this.onNavigateToSearch});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -16,48 +18,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch movies when screen loads
+    // Fetch all movies when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(movieProvider.notifier).getPopularMovies();
+      ref.read(homeProvider.notifier).loadAllMovies();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final movieState = ref.watch(movieProvider);
+    final homeState = ref.watch(homeProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Popular Movies'),
-        elevation: 0,
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(movieProvider.notifier).getPopularMovies(),
-        child: _buildBody(movieState),
-      ),
-    );
-  }
+    return RefreshIndicator(
+      onRefresh: () => ref.read(homeProvider.notifier).refresh(),
+      child: SafeArea(
+        child: Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Popular Movies Carousel
+                MovieCarousel(
+                  movies: homeState.popularMovies,
+                  isLoading: homeState.isLoadingPopular,
+                  error: homeState.popularError,
+                  onRetry: () =>
+                      ref.read(homeProvider.notifier).getPopularMovies(),
+                ),
 
-  Widget _buildBody(MovieState state) {
-    if (state.isLoading && state.movies.isEmpty) {
-      return const LoadingWidget();
-    }
+                const SizedBox(height: AppInsets.xl),
 
-    if (state.error != null && state.movies.isEmpty) {
-      return CustomErrorWidget(
-        message: state.error!,
-        onRetry: () => ref.read(movieProvider.notifier).getPopularMovies(),
-      );
-    }
+                // Now Playing Movies
+                HorizontalMovieList(
+                  title: 'Now Playing',
+                  movies: homeState.nowPlayingMovies,
+                  isLoading: homeState.isLoadingNowPlaying,
+                  error: homeState.nowPlayingError,
+                  onRetry: () =>
+                      ref.read(homeProvider.notifier).getNowPlayingMovies(),
+                  onSeeAll: () {
+                    // TODO: Navigate to now playing list
+                  },
+                ),
 
-    return Column(
-      children: [
-        if (state.isLoading)
-          const LinearProgressIndicator(),
-        Expanded(
-          child: MovieGrid(movies: state.movies),
+                const SizedBox(height: AppInsets.xl),
+
+                // Trending Movies
+                HorizontalMovieList(
+                  title: 'Trending Today',
+                  movies: homeState.trendingMovies,
+                  isLoading: homeState.isLoadingTrending,
+                  error: homeState.trendingError,
+                  onRetry: () =>
+                      ref.read(homeProvider.notifier).getTrendingMovies(),
+                  onSeeAll: () {
+                    // TODO: Navigate to trending list
+                  },
+                ),
+
+                const SizedBox(height: AppInsets.xxl),
+              ],
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 }

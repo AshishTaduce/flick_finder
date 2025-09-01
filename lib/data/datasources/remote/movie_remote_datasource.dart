@@ -109,6 +109,38 @@ class MovieRemoteDataSource {
     }
   }
 
+  Future<ApiResult<MovieResponseModel>> getNowPlayingMovies({int page = 1}) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.nowPlayingMovies,
+        queryParameters: {'page': page},
+      );
+
+      final movieResponse = MovieResponseModel.fromJson(response.data);
+      return Success(movieResponse);
+    } on DioException catch (e) {
+      return Failure(_handleDioError(e));
+    } catch (e) {
+      return Failure('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResult<MovieResponseModel>> getTrendingMovies({int page = 1}) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.trendingMovies,
+        queryParameters: {'page': page},
+      );
+
+      final movieResponse = MovieResponseModel.fromJson(response.data);
+      return Success(movieResponse);
+    } on DioException catch (e) {
+      return Failure(_handleDioError(e));
+    } catch (e) {
+      return Failure('Unexpected error: ${e.toString()}');
+    }
+  }
+
   String _handleDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:

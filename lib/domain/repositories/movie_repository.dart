@@ -7,6 +7,7 @@ abstract class MovieRepository {
   Future<ApiResult<List<Movie>>> getTopRatedMovies({int page = 1});
   Future<ApiResult<List<Movie>>> getNowPlayingMovies({int page = 1});
   Future<ApiResult<List<Movie>>> getUpcomingMovies({int page = 1});
+  Future<ApiResult<List<Movie>>> getTrendingMovies({int page = 1});
   Future<ApiResult<List<Movie>>> searchMovies(String query, {int page = 1});
   Future<ApiResult<List<Movie>>> searchMoviesWithFilters(
     String query, 

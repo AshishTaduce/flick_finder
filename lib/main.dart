@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/search/search_screen.dart';
+import 'shared/theme/app_insets.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() async {
@@ -44,46 +47,67 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const SearchScreen(),
-    const Center(child: Text('Discover')), // Placeholder
-    const Center(child: Text('Profile')), // Placeholder
-  ];
+  void _navigateToTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> screens = [
+      HomeScreen(onNavigateToSearch: () => _navigateToTab(1)),
+      const SearchScreen(),
+      const Center(child: Text('Discover')), // Placeholder
+      const Center(child: Text('Profile')), // Placeholder
+    ];
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+      body: IndexedStack(index: _currentIndex, children: screens),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.miniCenterDocked,
+      floatingActionButton: Container(
+        margin: const EdgeInsets.symmetric(
+          // horizontal: AppInsets.lg,
+          // vertical: AppInsets.md,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(AppInsets.md),
+            topRight: Radius.circular(AppInsets.md),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).surfaceVariant.withAlpha(150),
+                border: Border.all(
+                  color: Theme.of(context).primaryColor.withAlpha(50),
+                  width: 01,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppInsets.sm,
+                vertical: AppInsets.sm,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.home),
+                      Text(
+                        "Home",
+                        style: TextStyle(color: Theme.of(context).primaryColor),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: 'Discover',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        ),
       ),
     );
   }
