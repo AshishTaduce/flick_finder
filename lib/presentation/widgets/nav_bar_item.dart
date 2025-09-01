@@ -16,10 +16,10 @@ class NavBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomNavBarTheme = Theme.of(context).bottomNavigationBarTheme;
+    final theme = Theme.of(context).appBarTheme;
     final color = isActive
-        ? bottomNavBarTheme.selectedItemColor
-        : bottomNavBarTheme.unselectedItemColor;
+        ? theme.foregroundColor
+        : theme.foregroundColor?.withAlpha(100);
     final fontWeight = isActive ? FontWeight.w600 : FontWeight.normal;
 
     return GestureDetector(
