@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
+import '../../../core/utils/snackbar_utils.dart';
 import '../../../shared/theme/app_insets.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -43,11 +44,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       
       if (mounted) {
         widget.onLoginSuccess();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful! Welcome back.'),
-            backgroundColor: Colors.green,
-          ),
+        SnackbarUtils.showSuccess(
+          context,
+          'Login successful! Welcome back.',
         );
       }
     } catch (e) {
@@ -59,11 +58,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           errorMessage = 'Network error. Please check your connection.';
         }
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
+        SnackbarUtils.showError(
+          context,
+          errorMessage,
         );
       }
     } finally {
@@ -81,11 +78,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       widget.onLoginSuccess();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create guest session: $e'),
-            backgroundColor: Colors.red,
-          ),
+        SnackbarUtils.showError(
+          context,
+          'Failed to create guest session: $e',
         );
       }
     } finally {
@@ -143,11 +138,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 } else {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Could not open signup page'),
-                        backgroundColor: Colors.red,
-                      ),
+                    SnackbarUtils.showError(
+                      context,
+                      'Could not open signup page',
                     );
                   }
                 }

@@ -44,27 +44,20 @@ class ProfileScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                authState.isGuest 
-                                    ? 'Guest User' 
+                                authState.isGuest
+                                    ? 'Guest User'
                                     : authState.username ?? 'TMDB User',
                                 style: Theme.of(context).textTheme.headlineSmall,
                               ),
                               const SizedBox(height: AppInsets.xs),
                               Text(
-                                authState.isGuest 
+                                authState.isGuest
                                     ? 'Browsing as guest'
                                     : 'TMDB Account',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: Theme.of(context).textTheme.bodySmall?.color,
                                 ),
                               ),
-                              if (authState.userId != null) ...[
-                                const SizedBox(height: AppInsets.xs),
-                                Text(
-                                  'ID: ${authState.userId!.substring(0, 12)}...',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ],
                             ],
                           ),
                         ),
