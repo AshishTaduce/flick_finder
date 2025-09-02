@@ -5,10 +5,13 @@ import '../../domain/repositories/movie_repository.dart';
 import '../../core/network/api_result.dart';
 import '../../data/repositories/movie_repository_impl.dart';
 import '../../data/datasources/remote/movie_remote_datasource.dart';
+import '../../data/datasources/local/movie_local_datasource.dart';
 
 // Provider for movie repository (reuse existing one)
 final movieRepositoryProvider = Provider<MovieRepository>((ref) {
-  return MovieRepositoryImpl(MovieRemoteDataSource());
+  final remoteDataSource = MovieRemoteDataSource();
+  final localDataSource = MovieLocalDataSource();
+  return MovieRepositoryImpl(remoteDataSource, localDataSource);
 });
 
 // State class for person movies

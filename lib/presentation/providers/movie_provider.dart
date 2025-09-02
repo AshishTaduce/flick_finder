@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/api_result.dart';
 import '../../data/datasources/remote/movie_remote_datasource.dart';
+import '../../data/datasources/local/movie_local_datasource.dart';
 import '../../data/repositories/movie_repository_impl.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/repositories/movie_repository.dart';
@@ -10,9 +11,14 @@ final movieRemoteDataSourceProvider = Provider<MovieRemoteDataSource>((ref) {
   return MovieRemoteDataSource();
 });
 
+final movieLocalDataSourceProvider = Provider<MovieLocalDataSource>((ref) {
+  return MovieLocalDataSource();
+});
+
 final movieRepositoryProvider = Provider<MovieRepository>((ref) {
   final remoteDataSource = ref.read(movieRemoteDataSourceProvider);
-  return MovieRepositoryImpl(remoteDataSource);
+  final localDataSource = ref.read(movieLocalDataSourceProvider);
+  return MovieRepositoryImpl(remoteDataSource, localDataSource);
 });
 
 // State classes

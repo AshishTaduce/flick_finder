@@ -5,46 +5,30 @@ import '../../domain/entities/movie_detail.dart';
 import '../../domain/entities/cast.dart';
 import '../../domain/repositories/movie_repository.dart';
 import '../datasources/remote/movie_remote_datasource.dart';
+import '../datasources/local/movie_local_datasource.dart';
+import '../models/hive/cached_movie_model.dart';
+import '../models/hive/cached_movie_detail_model.dart';
+import '../models/movie_response_model.dart';
 
 class MovieRepositoryImpl implements MovieRepository {
   final MovieRemoteDataSource _remoteDataSource;
+  final MovieLocalDataSource _localDataSource;
 
-  MovieRepositoryImpl(this._remoteDataSource);
+  MovieRepositoryImpl(this._remoteDataSource, this._localDataSource);
 
   @override
   Future<ApiResult<List<Movie>>> getPopularMovies({int page = 1}) async {
-    final result = await _remoteDataSource.getPopularMovies(page: page);
-
-    return switch (result) {
-      Success(data: final response) => Success(
-        response.results.map((model) => model.toEntity()).toList(),
-      ),
-      Failure(message: final message, code: final code) => Failure(message, code: code),
-    };
+    return _getCachedMoviesWithRefresh('popular', page: page);
   }
 
   @override
   Future<ApiResult<List<Movie>>> getTopRatedMovies({int page = 1}) async {
-    final result = await _remoteDataSource.getTopRatedMovies(page: page);
-
-    return switch (result) {
-      Success(data: final response) => Success(
-        response.results.map((model) => model.toEntity()).toList(),
-      ),
-      Failure(message: final message, code: final code) => Failure(message, code: code),
-    };
+    return _getCachedMoviesWithRefresh('top_rated', page: page);
   }
 
   @override
   Future<ApiResult<List<Movie>>> getNowPlayingMovies({int page = 1}) async {
-    final result = await _remoteDataSource.getNowPlayingMovies(page: page);
-
-    return switch (result) {
-      Success(data: final response) => Success(
-        response.results.map((model) => model.toEntity()).toList(),
-      ),
-      Failure(message: final message, code: final code) => Failure(message, code: code),
-    };
+    return _getCachedMoviesWithRefresh('now_playing', page: page);
   }
 
   @override
@@ -55,27 +39,45 @@ class MovieRepositoryImpl implements MovieRepository {
 
   @override
   Future<ApiResult<List<Movie>>> getTrendingMovies({int page = 1}) async {
-    final result = await _remoteDataSource.getTrendingMovies(page: page);
-
-    return switch (result) {
-      Success(data: final response) => Success(
-        response.results.map((model) => model.toEntity()).toList(),
-      ),
-      Failure(message: final message, code: final code) => Failure(message, code: code),
-    };
+    return _getCachedMoviesWithRefresh('trending', page: page);
   }
 
   @override
   Future<ApiResult<List<Movie>>> searchMovies(String query, {int page = 1}) async {
     try {
-      final response = await _remoteDataSource.searchMovies(query, page: page);
+      // 1. Search in cached data first
+      final cachedResult = await _localDataSource.searchMovies(query);
+      List<Movie> cachedMovies = [];
+      
+      if (cachedResult is Success<List<CachedMovieModel>> && cachedResult.data.isNotEmpty) {
+        cachedMovies = cachedResult.data.map((m) => m.toEntity()).toList();
+      }
 
-      return switch (response) {
-        Success(data: final movieResponse) => Success(
+      // 2. Perform API search and cache results
+      final ApiResult<MovieResponseModel> response = await _remoteDataSource.searchMovies(query, page: page);
+
+      if (response is Success) {
+        final successResponse = response as Success;
+        final movieResponse = successResponse.data;
+        // Cache search results
+        _cacheSearchResults(movieResponse.results.map((m) => m.toJson()).toList(), query);
+        
+        // Combine and deduplicate results (API results first, then cached)
+        final combinedResults = _combineSearchResults(
           movieResponse.results.map((model) => model.toEntity()).toList(),
-        ),
-        Failure(message: final message, code: final code) => Failure(message, code: code),
-      };
+          cachedMovies,
+        );
+        return Success(combinedResults);
+      } else if (response is Failure) {
+        final failureResponse = response as Failure;
+        if (cachedMovies.isNotEmpty) {
+          return Success(cachedMovies);
+        } else {
+          return Failure(failureResponse.message, code: failureResponse.code);
+        }
+      }
+      
+      return Failure('Unknown error occurred');
     } catch (e) {
       return Failure('Search failed: ${e.toString()}');
     }
@@ -132,20 +134,67 @@ class MovieRepositoryImpl implements MovieRepository {
   @override
   Future<ApiResult<MovieDetail>> getMovieDetails(int movieId) async {
     try {
+      // 1. Always return cached detail first (if available)
+      final cachedResult = await _localDataSource.getMovieDetail(movieId);
+      
+      CachedMovieDetailModel? cachedDetail;
+      if (cachedResult is Success<CachedMovieDetailModel?> && cachedResult.data != null) {
+        cachedDetail = cachedResult.data!;
+      }
+
+      // 2. Check if we need to refresh
+      final isStaleResult = await _localDataSource.isMovieDetailStale(movieId);
+      final needsRefresh = isStaleResult is Success<bool> ? isStaleResult.data : true;
+
+      // 3. If cache is fresh, return cached data
+      if (!needsRefresh && cachedDetail != null) {
+        return Success(cachedDetail.toEntity());
+      }
+
+      // 4. If we have cached data, check for changes first
+      if (cachedDetail != null && !cachedDetail.isStale) {
+        final hasChanges = await _checkForMovieChanges(movieId, cachedDetail);
+        if (!hasChanges) {
+          // No changes, update timestamp and return cached data
+          await _localDataSource.updateMovieDetail(
+            cachedDetail.copyWith(lastUpdated: DateTime.now()),
+          );
+          return Success(cachedDetail.toEntity());
+        }
+      }
+
+      // 5. Fetch fresh data and update cache
       final detailResult = await _remoteDataSource.getMovieDetails(movieId);
       final creditsResult = await _remoteDataSource.getMovieCredits(movieId);
 
-      return switch (detailResult) {
-        Success(data: final detailModel) => switch (creditsResult) {
-          Success(data: final creditsModel) => Success(
-            detailModel.toEntity(cast: creditsModel.cast),
-          ),
-          Failure(message: final _, code: final _) => Success(
-            detailModel.toEntity(), // Return without cast if credits fail
-          ),
-        },
-        Failure(message: final message, code: final code) => Failure(message, code: code),
-      };
+      if (detailResult is Success) {
+        final successDetailResult = detailResult as Success;
+        final detailModel = successDetailResult.data;
+        if (creditsResult is Success) {
+          final successCreditsResult = creditsResult as Success;
+          final creditsModel = successCreditsResult.data;
+          // Save to cache with cast
+          _saveMovieDetailToCache(
+            detailModel.toJson(), 
+            creditsModel.cast.map((c) => c.toJson()).toList()
+          );
+          return Success(detailModel.toEntity(cast: creditsModel.cast));
+        } else {
+          // Save to cache without cast
+          _saveMovieDetailToCache(detailModel.toJson(), []);
+          return Success(detailModel.toEntity());
+        }
+      } else if (detailResult is Failure) {
+        final failureDetailResult = detailResult as Failure;
+        // If API fails but we have cached data, return it
+        if (cachedDetail != null) {
+          return Success(cachedDetail.toEntity());
+        } else {
+          return Failure(failureDetailResult.message, code: failureDetailResult.code);
+        }
+      }
+      
+      return Failure('Unknown error occurred');
     } catch (e) {
       return Failure('Failed to get movie details: ${e.toString()}');
     }
@@ -196,6 +245,144 @@ class MovieRepositoryImpl implements MovieRepository {
       };
     } catch (e) {
       return Failure('Failed to get person movies: ${e.toString()}');
+    }
+  }
+
+  // Cache-first implementation methods
+  Future<ApiResult<List<Movie>>> _getCachedMoviesWithRefresh(
+    String category, {
+    int page = 1,
+  }) async {
+    try {
+      // 1. Always return cached data first (if available)
+      final cachedResult = await _localDataSource.getMoviesByCategory(
+        category,
+        page: page,
+      );
+
+      List<Movie> cachedMovies = [];
+      if (cachedResult is Success<List<CachedMovieModel>> && cachedResult.data.isNotEmpty) {
+        cachedMovies = cachedResult.data.map((m) => m.toEntity()).toList();
+      }
+
+      // 2. Check if cache needs refresh
+      final isStaleResult = await _localDataSource.isCategoryStale(category, page: page);
+      final isStale = isStaleResult is Success<bool> ? isStaleResult.data : true;
+
+      // 3. If cache is fresh, return cached data
+      if (!isStale && cachedMovies.isNotEmpty) {
+        return Success(cachedMovies);
+      }
+
+      // 4. Fetch fresh data in background and update cache
+      _refreshCategoryInBackground(category, page: page);
+
+      // 5. Return cached data immediately (or empty if no cache)
+      return Success(cachedMovies);
+    } catch (e) {
+      return Failure('Failed to get movies: ${e.toString()}');
+    }
+  }
+
+  Future<void> _refreshCategoryInBackground(String category, {int page = 1}) async {
+    try {
+      ApiResult<dynamic> result;
+      
+      switch (category) {
+        case 'popular':
+          result = await _remoteDataSource.getPopularMovies(page: page);
+          break;
+        case 'top_rated':
+          result = await _remoteDataSource.getTopRatedMovies(page: page);
+          break;
+        case 'now_playing':
+          result = await _remoteDataSource.getNowPlayingMovies(page: page);
+          break;
+        case 'trending':
+          result = await _remoteDataSource.getTrendingMovies(page: page);
+          break;
+        default:
+          return;
+      }
+
+      if (result is Success) {
+        final movies = result.data.results
+            .map<CachedMovieModel>((model) => CachedMovieModel.fromApiResponse(
+                  model.toJson(),
+                  category: category,
+                ))
+            .toList();
+
+        await _localDataSource.saveMovies(movies, category, page: page);
+      }
+    } catch (e) {
+      print('Background refresh failed for $category: $e');
+    }
+  }
+
+  Future<bool> _checkForMovieChanges(int movieId, CachedMovieDetailModel cachedDetail) async {
+    try {
+      final lastUpdate = cachedDetail.lastUpdated ?? cachedDetail.cachedAt;
+      final startDate = lastUpdate.toIso8601String().split('T')[0]; // YYYY-MM-DD format
+      
+      final changesResult = await _remoteDataSource.getMovieChanges(
+        movieId,
+        startDate: startDate,
+      );
+
+      if (changesResult is Success<Map<String, dynamic>>) {
+        final changes = changesResult.data['changes'] as List<dynamic>?;
+        return changes != null && changes.isNotEmpty;
+      }
+      
+      return true; // Assume changes if we can't check
+    } catch (e) {
+      return true; // Assume changes on error
+    }
+  }
+
+  Future<void> _saveMovieDetailToCache(
+    Map<String, dynamic> detailJson,
+    List<Map<String, dynamic>> castJson,
+  ) async {
+    try {
+      final cachedDetail = CachedMovieDetailModel.fromApiResponse(detailJson, castJson);
+      await _localDataSource.saveMovieDetail(cachedDetail);
+    } catch (e) {
+      print('Failed to save movie detail to cache: $e');
+    }
+  }
+
+  List<Movie> _combineSearchResults(List<Movie> apiResults, List<Movie> cachedResults) {
+    final combined = <int, Movie>{};
+    
+    // Add API results first (higher priority)
+    for (final movie in apiResults) {
+      combined[movie.id] = movie;
+    }
+    
+    // Add cached results that aren't already present
+    for (final movie in cachedResults) {
+      if (!combined.containsKey(movie.id)) {
+        combined[movie.id] = movie;
+      }
+    }
+    
+    return combined.values.toList();
+  }
+
+  Future<void> _cacheSearchResults(List<Map<String, dynamic>> results, String query) async {
+    try {
+      final movies = results
+          .map((json) => CachedMovieModel.fromApiResponse(json, category: 'search'))
+          .toList();
+      
+      // Save individual movies to cache
+      for (final movie in movies) {
+        await _localDataSource.updateMovie(movie);
+      }
+    } catch (e) {
+      print('Failed to cache search results: $e');
     }
   }
 }

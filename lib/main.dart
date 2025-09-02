@@ -3,7 +3,10 @@ import 'dart:ui';
 import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'core/services/hive_service.dart';
+import 'core/services/connectivity_service.dart';
+import 'core/services/image_cache_service.dart';
+import 'core/services/background_sync_service.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/search/search_screen.dart';
 import 'presentation/screens/profile/profile_screen.dart';
@@ -11,12 +14,16 @@ import 'presentation/widgets/nav_bar_item.dart';
 import 'presentation/widgets/auth_wrapper.dart';
 import 'shared/theme/app_insets.dart';
 import 'shared/theme/app_theme.dart';
+import 'shared/widgets/network_status_indicator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
-  await Hive.initFlutter();
+  // Initialize core services
+  await HiveService.instance.init();
+  await ConnectivityService.instance.initialize();
+  await ImageCacheService.instance.initialize();
+  await BackgroundSyncService.instance.initialize();
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -66,9 +73,11 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.only(bottom: AppInsets.xxl),
-        child: IndexedStack(index: _currentIndex, children: screens),
+      body: NetworkStatusBanner(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: AppInsets.xxl),
+          child: IndexedStack(index: _currentIndex, children: screens),
+        ),
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,

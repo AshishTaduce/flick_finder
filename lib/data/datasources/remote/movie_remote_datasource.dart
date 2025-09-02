@@ -209,6 +209,56 @@ class MovieRemoteDataSource {
     }
   }
 
+  // TMDB Changes API for incremental updates
+  Future<ApiResult<Map<String, dynamic>>> getMovieChanges(
+    int movieId, {
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (startDate != null) queryParams['start_date'] = startDate;
+      if (endDate != null) queryParams['end_date'] = endDate;
+
+      final response = await _dio.get(
+        '${ApiConstants.movieDetails}/$movieId/changes',
+        queryParameters: queryParams,
+      );
+
+      return Success(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      return Failure(_handleDioError(e));
+    } catch (e) {
+      return Failure('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  // Get latest movie changes for batch updates
+  Future<ApiResult<Map<String, dynamic>>> getLatestChanges({
+    String? startDate,
+    String? endDate,
+    int page = 1,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+      };
+      if (startDate != null) queryParams['start_date'] = startDate;
+      if (endDate != null) queryParams['end_date'] = endDate;
+
+      final response = await _dio.get(
+        ApiConstants.movieChanges,
+        queryParameters: queryParams,
+      );
+
+      return Success(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      return Failure(_handleDioError(e));
+    } catch (e) {
+      return Failure('Unexpected error: ${e.toString()}');
+    }
+  }
+
   String _handleDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:

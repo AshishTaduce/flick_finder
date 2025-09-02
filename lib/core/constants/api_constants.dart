@@ -47,6 +47,11 @@ class ApiConstants {
   static const String removeMovieFromList = '/list'; // /list/{list_id}/remove_item
   static const String deleteList = '/list'; // /list/{list_id}
   static const String getUserLists = '/account/{account_id}/lists';
+  
+  // Changes API endpoints
+  static const String movieChanges = '/movie/changes';
+  static const String personChanges = '/person/changes';
+  static const String tvChanges = '/tv/changes';
 
   // TMDB Genre IDs mapping
   static const Map<String, int> movieGenreIds = {

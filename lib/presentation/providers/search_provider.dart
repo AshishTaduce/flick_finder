@@ -3,64 +3,82 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_result.dart';
+import '../../core/services/connectivity_service.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/entities/filter_options.dart';
 import '../../domain/repositories/movie_repository.dart';
+import '../../data/datasources/local/movie_local_datasource.dart';
 import 'movie_provider.dart';
+import 'connectivity_provider.dart';
 
 // Search State
 class SearchState {
   final String query;
   final List<Movie> searchResults;
   final List<Movie> filteredResults;
+  final List<String> searchHistory;
+  final List<String> searchSuggestions;
   final bool isLoading;
   final bool isLoadingMore;
   final String? error;
   final FilterOptions filters;
   final int currentPage;
   final bool hasMorePages;
+  final bool isOfflineSearch;
 
   const SearchState({
     this.query = '',
     this.searchResults = const [],
     this.filteredResults = const [],
+    this.searchHistory = const [],
+    this.searchSuggestions = const [],
     this.isLoading = false,
     this.isLoadingMore = false,
     this.error,
     this.filters = const FilterOptions(),
     this.currentPage = 1,
     this.hasMorePages = true,
+    this.isOfflineSearch = false,
   });
 
   SearchState copyWith({
     String? query,
     List<Movie>? searchResults,
     List<Movie>? filteredResults,
+    List<String>? searchHistory,
+    List<String>? searchSuggestions,
     bool? isLoading,
     bool? isLoadingMore,
     String? error,
     FilterOptions? filters,
     int? currentPage,
     bool? hasMorePages,
+    bool? isOfflineSearch,
   }) {
     return SearchState(
       query: query ?? this.query,
       searchResults: searchResults ?? this.searchResults,
       filteredResults: filteredResults ?? this.filteredResults,
+      searchHistory: searchHistory ?? this.searchHistory,
+      searchSuggestions: searchSuggestions ?? this.searchSuggestions,
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: error,
       filters: filters ?? this.filters,
       currentPage: currentPage ?? this.currentPage,
       hasMorePages: hasMorePages ?? this.hasMorePages,
+      isOfflineSearch: isOfflineSearch ?? this.isOfflineSearch,
     );
   }
 }
 
 class SearchNotifier extends StateNotifier<SearchState> {
   final MovieRepository _repository;
+  final MovieLocalDataSource _localDatasource;
+  final ConnectivityService _connectivityService;
 
-  SearchNotifier(this._repository) : super(const SearchState());
+  SearchNotifier(this._repository, this._localDatasource, this._connectivityService) 
+      : super(const SearchState());
 
   void updateQuery(String query) {
     state = state.copyWith(
@@ -92,6 +110,14 @@ class SearchNotifier extends StateNotifier<SearchState> {
       state = state.copyWith(isLoadingMore: true, error: null);
     }
 
+    final isOnline = _connectivityService.isOnline;
+    
+    // For offline search, use local cache
+    if (!isOnline) {
+      await _performOfflineSearch(query, isNewSearch: isNewSearch);
+      return;
+    }
+
     // Use filtered search if filters are active, otherwise use basic search
     final result = state.filters.hasActiveFilters
         ? await _repository.searchMoviesWithFilters(query, state.filters, page: state.currentPage)
@@ -110,14 +136,74 @@ class SearchNotifier extends StateNotifier<SearchState> {
           isLoadingMore: false,
           currentPage: state.currentPage + 1,
           hasMorePages: movies.length >= 30, // Updated page size
+          isOfflineSearch: false,
         );
       case Failure(message: final message):
-        state = state.copyWith(
-          isLoading: false,
-          isLoadingMore: false,
-          error: message,
-        );
+        // If online search fails, try offline fallback
+        await _performOfflineSearch(query, isNewSearch: isNewSearch, showOfflineMessage: true);
     }
+  }
+
+  Future<void> _performOfflineSearch(String query, {bool isNewSearch = false, bool showOfflineMessage = false}) async {
+    try {
+      final result = await _localDatasource.searchMovies(query);
+      switch (result) {
+        case Success(data: final cachedMovies):
+          final movies = cachedMovies.map((cached) => cached.toEntity()).toList();
+          
+          // Apply filters if active
+          List<Movie> filteredMovies = movies;
+          if (state.filters.hasActiveFilters) {
+            filteredMovies = _applyFiltersToMovies(movies, state.filters);
+          }
+          
+          final updatedMovies = isNewSearch 
+              ? filteredMovies 
+              : [...state.searchResults, ...filteredMovies];
+          
+          state = state.copyWith(
+            searchResults: updatedMovies,
+            filteredResults: updatedMovies,
+            isLoading: false,
+            isLoadingMore: false,
+            hasMorePages: false, // No pagination for offline search
+            isOfflineSearch: true,
+            error: showOfflineMessage ? 'Showing cached results (offline)' : null,
+          );
+        case Failure():
+          throw Exception('Search failed');
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        isLoadingMore: false,
+        error: 'No cached results found for "$query"',
+        isOfflineSearch: true,
+      );
+    }
+  }
+
+  List<Movie> _applyFiltersToMovies(List<Movie> movies, FilterOptions filters) {
+    return movies.where((movie) {
+      // Apply genre filter
+      if (filters.selectedGenres.isNotEmpty) {
+        final hasMatchingGenre = movie.genreIds.any((genreId) {
+          // This is a simplified check - in a real app you'd map genre IDs to names
+          return filters.selectedGenres.contains(genreId.toString());
+        });
+        if (!hasMatchingGenre) return false;
+      }
+      
+      // Apply rating filter
+      if (filters.minRating > 0 && movie.rating < filters.minRating) {
+        return false;
+      }
+      
+      // Apply year filter (simplified - would need release date parsing)
+      // This is a basic implementation
+      
+      return true;
+    }).toList();
   }
 
   Future<void> _discoverMovies({bool isNewSearch = false}) async {
@@ -125,6 +211,14 @@ class SearchNotifier extends StateNotifier<SearchState> {
       state = state.copyWith(isLoading: true, error: null);
     } else {
       state = state.copyWith(isLoadingMore: true, error: null);
+    }
+
+    final isOnline = _connectivityService.isOnline;
+    
+    // For offline discovery, use cached popular movies
+    if (!isOnline) {
+      await _performOfflineDiscovery(isNewSearch: isNewSearch);
+      return;
     }
 
     final result = await _repository.discoverMovies(state.filters, page: state.currentPage);
@@ -142,13 +236,47 @@ class SearchNotifier extends StateNotifier<SearchState> {
           isLoadingMore: false,
           currentPage: state.currentPage + 1,
           hasMorePages: movies.length >= 30, // Updated page size
+          isOfflineSearch: false,
         );
       case Failure(message: final message):
-        state = state.copyWith(
-          isLoading: false,
-          isLoadingMore: false,
-          error: message,
-        );
+        // If online discovery fails, try offline fallback
+        await _performOfflineDiscovery(isNewSearch: isNewSearch, showOfflineMessage: true);
+    }
+  }
+
+  Future<void> _performOfflineDiscovery({bool isNewSearch = false, bool showOfflineMessage = false}) async {
+    try {
+      final result = await _localDatasource.getMoviesByCategory('popular');
+      switch (result) {
+        case Success(data: final cachedMovies):
+          final movies = cachedMovies.map((cached) => cached.toEntity()).toList();
+          
+          // Apply filters
+          final filteredMovies = _applyFiltersToMovies(movies, state.filters);
+          
+          final updatedMovies = isNewSearch 
+              ? filteredMovies 
+              : [...state.searchResults, ...filteredMovies];
+          
+          state = state.copyWith(
+            searchResults: updatedMovies,
+            filteredResults: updatedMovies,
+            isLoading: false,
+            isLoadingMore: false,
+            hasMorePages: false, // No pagination for offline discovery
+            isOfflineSearch: true,
+            error: showOfflineMessage ? 'Showing cached results (offline)' : null,
+          );
+        case Failure():
+          throw Exception('Failed to get popular movies');
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        isLoadingMore: false,
+        error: 'No cached movies available offline',
+        isOfflineSearch: true,
+      );
     }
   }
 
@@ -248,5 +376,12 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
 final searchProvider = StateNotifierProvider<SearchNotifier, SearchState>((ref) {
   final repository = ref.read(movieRepositoryProvider);
-  return SearchNotifier(repository);
+  final localDatasource = ref.read(movieLocalDatasourceProvider);
+  final connectivityService = ref.read(connectivityServiceProvider);
+  return SearchNotifier(repository, localDatasource, connectivityService);
+});
+
+// Provider for local datasource
+final movieLocalDatasourceProvider = Provider<MovieLocalDataSource>((ref) {
+  return MovieLocalDataSource();
 });
