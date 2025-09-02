@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../domain/entities/filter_options.dart';
-import '../../../shared/widgets/movie_grid.dart';
+import '../../../shared/widgets/paginated_movie_grid.dart';
 import '../../providers/search_provider.dart';
 import '../home/widgets/error_widget.dart';
 import '../home/widgets/loading_widget.dart';
@@ -135,9 +135,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
         // Results grid
         Expanded(
-          child: MovieGrid(
+          child: PaginatedMovieGrid(
             movies: results,
             crossAxisCount: 3,
+            isLoadingMore: state.isLoadingMore,
+            hasMorePages: state.hasMorePages,
+            onLoadMore: () => ref.read(searchProvider.notifier).loadMoreResults(),
           ),
         ),
       ],

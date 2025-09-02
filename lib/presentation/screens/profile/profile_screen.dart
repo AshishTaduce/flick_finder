@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../../shared/theme/app_insets.dart';
+import '../watchlist/watchlist_screen.dart';
+import '../favorites/favorites_screen.dart';
+import '../rated/rated_movies_screen.dart';
+import '../settings/settings_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -18,9 +22,9 @@ class ProfileScreen extends ConsumerWidget {
       body: Padding(
         padding: const EdgeInsets.all(AppInsets.lg),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User Info Card
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(AppInsets.lg),
@@ -79,7 +83,7 @@ class ProfileScreen extends ConsumerWidget {
                 authState.isGuest ? 'Guest Session' : 'TMDB Account',
               ),
               subtitle: Text(
-                authState.isGuest 
+                authState.isGuest
                     ? 'Limited features available'
                     : 'Full access to all features',
               ),
@@ -95,7 +99,7 @@ class ProfileScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: AppInsets.md),
-              
+
               // Feature tiles
               ListTile(
                 leading: const Icon(Icons.bookmark, color: Colors.blue),
@@ -103,35 +107,41 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: const Text('Movies you want to watch'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: Navigate to watchlist screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Watchlist screen coming soon!')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WatchlistScreen(),
+                    ),
                   );
                 },
               ),
-              
+
               ListTile(
                 leading: const Icon(Icons.favorite, color: Colors.red),
                 title: const Text('Favorites'),
                 subtitle: const Text('Movies you love'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: Navigate to favorites screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Favorites screen coming soon!')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FavoritesScreen(),
+                    ),
                   );
                 },
               ),
-              
+
               ListTile(
                 leading: const Icon(Icons.star, color: Colors.amber),
                 title: const Text('Rated Movies'),
                 subtitle: const Text('Movies you\'ve rated'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: Navigate to rated movies screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Rated movies screen coming soon!')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RatedMoviesScreen(),
+                    ),
                   );
                 },
               ),
@@ -185,6 +195,31 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ],
 
+            // Settings section
+            const SizedBox(height: AppInsets.md),
+            const Divider(),
+            const SizedBox(height: AppInsets.md),
+            Text(
+              'App Settings',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: AppInsets.md),
+
+            ListTile(
+              leading: const Icon(Icons.settings, color: Colors.grey),
+              title: const Text('Language & Region'),
+              subtitle: const Text('Content preferences'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+              },
+            ),
+
             const Spacer(),
 
             // Logout Button
@@ -197,7 +232,7 @@ class ProfileScreen extends ConsumerWidget {
                     builder: (context) => AlertDialog(
                       title: const Text('Logout'),
                       content: Text(
-                        authState.isGuest 
+                        authState.isGuest
                             ? 'Are you sure you want to end your guest session?'
                             : 'Are you sure you want to logout?',
                       ),

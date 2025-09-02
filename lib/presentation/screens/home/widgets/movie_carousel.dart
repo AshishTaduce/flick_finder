@@ -5,6 +5,7 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_insets.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/custom_image_widget.dart';
+import '../../movie_detail/movie_detail_screen.dart';
 
 class MovieCarousel extends StatefulWidget {
   final List<Movie> movies;
@@ -131,40 +132,50 @@ class _MovieCarouselState extends State<MovieCarousel> {
             ? '${ApiConstants.imageBaseUrl}${movie.posterPath}'
             : null;
 
-    return Container(
-      width: size.width,
-      decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
-            ? AppColors.darkSurfaceVariant
-            : AppColors.lightSurfaceVariant,
-      ),
-      child: imageUrl != null
-          ? CustomImageWidget(
-              imageUrl: imageUrl,
-              fit: BoxFit.cover,
-              errorWidget: Container(
-                color: theme.brightness == Brightness.dark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                child: const Center(
-                  child: Icon(Icons.error, size: 50),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MovieDetailScreen(movie: movie),
+          ),
+        );
+      },
+      child: Container(
+        width: size.width,
+        decoration: BoxDecoration(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.darkSurfaceVariant
+              : AppColors.lightSurfaceVariant,
+        ),
+        child: imageUrl != null
+            ? CustomImageWidget(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                errorWidget: Container(
+                  color: theme.brightness == Brightness.dark
+                      ? AppColors.darkSurfaceVariant
+                      : AppColors.lightSurfaceVariant,
+                  child: const Center(
+                    child: Icon(Icons.error, size: 50),
+                  ),
+                ),
+              )
+            : Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.movie, size: 80),
+                    const SizedBox(height: AppInsets.md),
+                    Text(
+                      movie.title,
+                      style: theme.textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
-            )
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.movie, size: 80),
-                  const SizedBox(height: AppInsets.md),
-                  Text(
-                    movie.title,
-                    style: theme.textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+      ),
     );
   }
 

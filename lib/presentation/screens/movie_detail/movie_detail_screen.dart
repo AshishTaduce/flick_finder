@@ -2,6 +2,8 @@ import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/services/watch_providers_service.dart';
+import '../../../core/services/user_features_service.dart';
 import '../../../domain/entities/movie.dart';
 import '../../../domain/entities/movie_detail.dart';
 import '../../../domain/entities/cast.dart';
@@ -11,6 +13,10 @@ import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/custom_image_widget.dart';
 import '../home/widgets/horizontal_movie_list.dart';
 import '../../providers/movie_detail_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../widgets/watch_providers_dialog.dart';
+import '../../widgets/share_movie_dialog.dart';
+import '../../widgets/add_to_list_dialog.dart';
 import '../person_movies/person_movies_screen.dart';
 
 class MovieDetailScreen extends ConsumerStatefulWidget {
@@ -24,6 +30,29 @@ class MovieDetailScreen extends ConsumerStatefulWidget {
 
 class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
   bool _isExpanded = false;
+  double? _userRating;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMovieStates();
+  }
+
+  Future<void> _loadMovieStates() async {
+    final authState = ref.read(authProvider);
+    if (authState.isGuest || !authState.isAuthenticated) return;
+
+    try {
+      final states = await UserFeaturesService.instance.getMovieAccountStates(widget.movie.id);
+      if (states != null && mounted) {
+        setState(() {
+          _userRating = states['rated'] != false ? states['rated']['value']?.toDouble() : null;
+        });
+      }
+    } catch (e) {
+      // Silently handle errors
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,17 +84,27 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
 
   Widget _buildHeroSection(ThemeData theme, MovieDetail? movieDetail) {
     return SliverAppBar(
+      elevation: 5,
       expandedHeight: 300,
       pinned: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      surfaceTintColor: theme.appBarTheme.foregroundColor,
       flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: Text(
+          movieDetail?.title ?? widget.movie.title,
+          style: AppTypography.headlineMedium,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         background: Stack(
           fit: StackFit.expand,
           children: [
             // Backdrop image
             if (widget.movie.backdropPath != null)
               CustomImageWidget(
-                imageUrl: '${ApiConstants.imageBaseUrl}${widget.movie.backdropPath}',
+                imageUrl:
+                    '${ApiConstants.imageBaseUrl}${widget.movie.backdropPath}',
                 fit: BoxFit.cover,
                 errorWidget: Container(
                   color: theme.brightness == Brightness.dark
@@ -73,7 +112,24 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                       : AppColors.lightSurfaceVariant,
                   child: const Icon(Icons.error, size: 50),
                 ),
+              )
+            else
+              Container(
+                color: theme.brightness == Brightness.dark
+                    ? AppColors.darkSurfaceVariant
+                    : AppColors.lightSurfaceVariant,
+                child: const Icon(Icons.movie, size: 50),
               ),
+            // Gradient overlay for better text readability
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -90,18 +146,6 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          Text(
-            movieDetail?.title ?? widget.movie.title,
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontWeight: AppTypography.bold,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          const SizedBox(height: AppInsets.sm),
-
           // Subtitle with years and runtime
           Row(
             children: [
@@ -121,6 +165,13 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                   style: theme.textTheme.bodyLarge,
                 ),
               ],
+              const SizedBox(width: AppInsets.md),
+              Text(
+                '🌟 ${(movieDetail?.rating ?? widget.movie.rating).toStringAsFixed(1)}',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: AppTypography.medium,
+                ),
+              ),
             ],
           ),
 
@@ -128,7 +179,6 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
 
           // Action buttons
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppInsets.md),
             decoration: BoxDecoration(
               color: Theme.of(context).surfaceVariant,
               borderRadius: BorderRadius.circular(AppInsets.radiusSm),
@@ -141,11 +191,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                     child: _buildPrimeActionButton(
                       icon: Icons.play_circle,
                       label: 'Watch',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Added to watchlist!')),
-                        );
-                      },
+                      onTap: () => _showWatchProviders(),
                     ),
                   ),
                   Padding(
@@ -154,20 +200,13 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                       color: Theme.of(context).appBarTheme.foregroundColor,
                       width: 1,
                       radius: BorderRadius.circular(AppInsets.radiusXxl),
-                      // height: 20,
                     ),
                   ),
                   Expanded(
                     child: _buildPrimeActionButton(
                       icon: Icons.playlist_add,
                       label: 'Add to List',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Download feature coming soon!'),
-                          ),
-                        );
-                      },
+                      onTap: () => _showAddToListDialog(),
                     ),
                   ),
                   Padding(
@@ -176,26 +215,46 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                       color: Theme.of(context).appBarTheme.foregroundColor,
                       width: 1,
                       radius: BorderRadius.circular(AppInsets.radiusXxl),
-                      // height: 20,
                     ),
                   ),
                   Expanded(
                     child: _buildPrimeActionButton(
-                      icon: Icons.offline_share,
-                      label: 'Share',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Share feature coming soon!'),
-                          ),
-                        );
-                      },
+                      icon: _userRating != null ? Icons.star : Icons.star_border,
+                      label: _userRating != null ? _userRating!.toStringAsFixed(1) : 'Rate',
+                      onTap: () => _showRatingDialog(),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppInsets.md),
+                    child: VerticalDivider(
+                      color: Theme.of(context).appBarTheme.foregroundColor,
+                      width: 1,
+                      radius: BorderRadius.circular(AppInsets.radiusXxl),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: _buildPrimeActionButton(
+                      icon: Icons.share,
+                      label: 'Share',
+                      onTap: () => _showShareDialog(),
+                    ),
+                  ),
+
                 ],
               ),
             ),
           ),
+          
+          const SizedBox(height: AppInsets.lg),
+          
+          // User action buttons (favorites, watchlist, rating)
+          // Center(
+          //   child: MovieActionButtons(
+          //     movieId: widget.movie.id,
+          //     movieTitle: movieDetail?.title ?? widget.movie.title,
+          //   ),
+          // ),
         ],
       ),
     );
@@ -216,11 +275,11 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
         decoration: BoxDecoration(),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(icon, size: AppInsets.iconLg),
             const SizedBox(height: AppInsets.xs),
-            Text(label, style: AppTypography.labelLarge),
+            Text(label, style: AppTypography.labelLarge, textAlign: TextAlign.center,),
           ],
         ),
       ),
@@ -309,7 +368,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
           ),
           _buildDetailRow(
             'Rating',
-            '🌟 ${(movieDetail?.rating ?? widget.movie.rating).toStringAsFixed(1)}/10 (${movieDetail?.voteCount ?? widget.movie.voteCount} votes)',
+            '${(movieDetail?.rating ?? widget.movie.rating).toStringAsFixed(1)}/10 (${movieDetail?.voteCount ?? widget.movie.voteCount} votes)',
             theme,
           ),
           if (movieDetail?.genres.isNotEmpty == true)
@@ -427,7 +486,9 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
               ),
               child: ClipOval(
                 child: CustomImageWidget(
-                  imageUrl: castMember.profilePath != null ? castMember.fullProfileUrl : null,
+                  imageUrl: castMember.profilePath != null
+                      ? castMember.fullProfileUrl
+                      : null,
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
@@ -491,5 +552,124 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
       'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  Future<void> _showWatchProviders() async {
+    try {
+      final watchProviders = await WatchProvidersService.instance.getWatchProviders(widget.movie.id);
+      
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => WatchProvidersDialog(
+            movieTitle: widget.movie.title,
+            watchProviders: watchProviders,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading watch providers: $e')),
+        );
+      }
+    }
+  }
+
+
+  Future<void> _showRatingDialog() async {
+    final authState = ref.read(authProvider);
+    if (authState.isGuest || !authState.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to rate movies')),
+      );
+      return;
+    }
+
+    double currentRating = _userRating ?? 5.0;
+    
+    final rating = await showDialog<double>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Rate "${widget.movie.title}"'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Rating: ${currentRating.toStringAsFixed(1)}/10'),
+              const SizedBox(height: 16),
+              Slider(
+                value: currentRating,
+                min: 0.5,
+                max: 10.0,
+                divisions: 19,
+                label: currentRating.toStringAsFixed(1),
+                onChanged: (value) {
+                  setDialogState(() {
+                    currentRating = value;
+                  });
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(currentRating),
+              child: const Text('Rate'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (rating != null) {
+      try {
+        final success = await UserFeaturesService.instance.rateMovie(
+          widget.movie.id,
+          rating,
+        );
+        
+        if (success && mounted) {
+          setState(() {
+            _userRating = rating;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Rated ${rating.toStringAsFixed(1)}/10')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+          );
+        }
+      }
+    }
+  }
+
+  void _showShareDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ShareMovieDialog(
+        movieId: widget.movie.id,
+        movieTitle: widget.movie.title,
+        posterPath: widget.movie.posterPath,
+      ),
+    );
+  }
+
+  void _showAddToListDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AddToListDialog(
+        movieId: widget.movie.id,
+        movieTitle: widget.movie.title,
+      ),
+    );
   }
 }

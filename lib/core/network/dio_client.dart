@@ -3,6 +3,7 @@ import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
 import '../constants/api_constants.dart';
 import '../services/auth_service.dart';
+import '../services/settings_service.dart';
 
 class DioClient {
   static Dio? _instance;
@@ -67,6 +68,12 @@ class DioClient {
         onRequest: (options, handler) async {
           options.queryParameters['api_key'] = ApiConstants.apiKey;
           
+          // Add language and region preferences
+          final language = await SettingsService.instance.getLanguage();
+          final region = await SettingsService.instance.getRegion();
+          options.queryParameters['language'] = language;
+          options.queryParameters['region'] = region;
+          
           // Add authentication token if available
           final token = await AuthService.instance.getToken();
           if (token != null && token.isNotEmpty) {
@@ -75,6 +82,7 @@ class DioClient {
           
           if (kDebugMode) {
             debugPrint('Request: ${options.method} ${options.path}');
+            debugPrint('Language: $language, Region: $region');
             if (token != null) {
               debugPrint('Auth token included: ${token.substring(0, 10)}...');
             }

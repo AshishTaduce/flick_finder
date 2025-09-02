@@ -36,6 +36,17 @@ class ApiConstants {
   static const String getWatchlist = '/account/{account_id}/watchlist/movies';
   static const String getFavorites = '/account/{account_id}/favorite/movies';
   static const String getRatedMovies = '/account/{account_id}/rated/movies';
+  
+  // Watch providers endpoint
+  static const String watchProviders = '/movie'; // /movie/{movie_id}/watch/providers
+  
+  // TMDB Lists endpoints
+  static const String createList = '/list';
+  static const String getList = '/list'; // /list/{list_id}
+  static const String addMovieToList = '/list'; // /list/{list_id}/add_item
+  static const String removeMovieFromList = '/list'; // /list/{list_id}/remove_item
+  static const String deleteList = '/list'; // /list/{list_id}
+  static const String getUserLists = '/account/{account_id}/lists';
 
   // TMDB Genre IDs mapping
   static const Map<String, int> movieGenreIds = {

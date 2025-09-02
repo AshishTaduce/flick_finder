@@ -14,16 +14,22 @@ class SearchState {
   final List<Movie> searchResults;
   final List<Movie> filteredResults;
   final bool isLoading;
+  final bool isLoadingMore;
   final String? error;
   final FilterOptions filters;
+  final int currentPage;
+  final bool hasMorePages;
 
   const SearchState({
     this.query = '',
     this.searchResults = const [],
     this.filteredResults = const [],
     this.isLoading = false,
+    this.isLoadingMore = false,
     this.error,
     this.filters = const FilterOptions(),
+    this.currentPage = 1,
+    this.hasMorePages = true,
   });
 
   SearchState copyWith({
@@ -31,16 +37,22 @@ class SearchState {
     List<Movie>? searchResults,
     List<Movie>? filteredResults,
     bool? isLoading,
+    bool? isLoadingMore,
     String? error,
     FilterOptions? filters,
+    int? currentPage,
+    bool? hasMorePages,
   }) {
     return SearchState(
       query: query ?? this.query,
       searchResults: searchResults ?? this.searchResults,
       filteredResults: filteredResults ?? this.filteredResults,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: error,
       filters: filters ?? this.filters,
+      currentPage: currentPage ?? this.currentPage,
+      hasMorePages: hasMorePages ?? this.hasMorePages,
     );
   }
 }
@@ -51,93 +63,145 @@ class SearchNotifier extends StateNotifier<SearchState> {
   SearchNotifier(this._repository) : super(const SearchState());
 
   void updateQuery(String query) {
-    state = state.copyWith(query: query);
+    state = state.copyWith(
+      query: query,
+      currentPage: 1,
+      hasMorePages: true,
+    );
     if (query.isNotEmpty) {
-      _searchMovies(query);
+      _searchMovies(query, isNewSearch: true);
     } else {
       // If no query, use discover API with current filters if any filters are active
       if (state.filters.hasActiveFilters) {
-        _discoverMovies();
+        _discoverMovies(isNewSearch: true);
       } else {
         state = state.copyWith(
           searchResults: [],
           filteredResults: [],
+          currentPage: 1,
+          hasMorePages: true,
         );
       }
     }
   }
 
-  Future<void> _searchMovies(String query) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> _searchMovies(String query, {bool isNewSearch = false}) async {
+    if (isNewSearch) {
+      state = state.copyWith(isLoading: true, error: null);
+    } else {
+      state = state.copyWith(isLoadingMore: true, error: null);
+    }
 
     // Use filtered search if filters are active, otherwise use basic search
     final result = state.filters.hasActiveFilters
-        ? await _repository.searchMoviesWithFilters(query, state.filters)
-        : await _repository.searchMovies(query);
+        ? await _repository.searchMoviesWithFilters(query, state.filters, page: state.currentPage)
+        : await _repository.searchMovies(query, page: state.currentPage);
 
     switch (result) {
       case Success(data: final movies):
+        final updatedMovies = isNewSearch 
+            ? movies 
+            : [...state.searchResults, ...movies];
+        
         state = state.copyWith(
-          searchResults: movies,
-          filteredResults: movies,
+          searchResults: updatedMovies,
+          filteredResults: updatedMovies,
           isLoading: false,
+          isLoadingMore: false,
+          currentPage: state.currentPage + 1,
+          hasMorePages: movies.length >= 30, // Updated page size
         );
       case Failure(message: final message):
         state = state.copyWith(
           isLoading: false,
+          isLoadingMore: false,
           error: message,
         );
     }
   }
 
-  Future<void> _discoverMovies() async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> _discoverMovies({bool isNewSearch = false}) async {
+    if (isNewSearch) {
+      state = state.copyWith(isLoading: true, error: null);
+    } else {
+      state = state.copyWith(isLoadingMore: true, error: null);
+    }
 
-    final result = await _repository.discoverMovies(state.filters);
+    final result = await _repository.discoverMovies(state.filters, page: state.currentPage);
 
     switch (result) {
       case Success(data: final movies):
+        final updatedMovies = isNewSearch 
+            ? movies 
+            : [...state.searchResults, ...movies];
+        
         state = state.copyWith(
-          searchResults: movies,
-          filteredResults: movies,
+          searchResults: updatedMovies,
+          filteredResults: updatedMovies,
           isLoading: false,
+          isLoadingMore: false,
+          currentPage: state.currentPage + 1,
+          hasMorePages: movies.length >= 30, // Updated page size
         );
       case Failure(message: final message):
         state = state.copyWith(
           isLoading: false,
+          isLoadingMore: false,
           error: message,
         );
     }
   }
 
   void updateFilters(FilterOptions newFilters) {
-    state = state.copyWith(filters: newFilters);
+    state = state.copyWith(
+      filters: newFilters,
+      currentPage: 1,
+      hasMorePages: true,
+    );
     
     // Re-search with new filters
     if (state.query.isNotEmpty) {
-      _searchMovies(state.query);
+      _searchMovies(state.query, isNewSearch: true);
     } else if (newFilters.hasActiveFilters) {
-      _discoverMovies();
+      _discoverMovies(isNewSearch: true);
     } else {
       state = state.copyWith(
         searchResults: [],
         filteredResults: [],
+        currentPage: 1,
+        hasMorePages: true,
       );
     }
   }
 
   void clearFilters() {
     const emptyFilters = FilterOptions();
-    state = state.copyWith(filters: emptyFilters);
+    state = state.copyWith(
+      filters: emptyFilters,
+      currentPage: 1,
+      hasMorePages: true,
+    );
     
     // Re-search without filters
     if (state.query.isNotEmpty) {
-      _searchMovies(state.query);
+      _searchMovies(state.query, isNewSearch: true);
     } else {
       state = state.copyWith(
         searchResults: [],
         filteredResults: [],
+        currentPage: 1,
+        hasMorePages: true,
       );
+    }
+  }
+
+  Future<void> loadMoreResults() async {
+    if (state.isLoadingMore || !state.hasMorePages) return;
+
+    if (state.query.isNotEmpty) {
+      await _searchMovies(state.query);
+    } else if (state.filters.hasActiveFilters) {
+      await _discoverMovies();
     }
   }
 

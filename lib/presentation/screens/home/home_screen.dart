@@ -4,7 +4,7 @@ import '../../../shared/theme/app_insets.dart';
 import '../../providers/home_provider.dart';
 import '../../widgets/auth_status_widget.dart';
 import 'widgets/movie_carousel.dart';
-import 'widgets/horizontal_movie_list.dart';
+import 'widgets/paginated_horizontal_movie_list.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNavigateToSearch;
@@ -66,25 +66,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: AppInsets.xl),
 
                 // Now Playing Movies
-                HorizontalMovieList(
+                PaginatedHorizontalMovieList(
                   title: 'Now Playing',
                   movies: homeState.nowPlayingMovies,
                   isLoading: homeState.isLoadingNowPlaying,
+                  isLoadingMore: homeState.isLoadingMoreNowPlaying,
+                  hasMore: homeState.hasMoreNowPlaying,
                   error: homeState.nowPlayingError,
                   onRetry: () =>
                       ref.read(homeProvider.notifier).getNowPlayingMovies(),
+                  onLoadMore: () =>
+                      ref.read(homeProvider.notifier).getNowPlayingMovies(loadMore: true),
                 ),
 
                 const SizedBox(height: AppInsets.xl),
 
                 // Trending Movies
-                HorizontalMovieList(
+                PaginatedHorizontalMovieList(
                   title: 'Trending Today',
                   movies: homeState.trendingMovies,
                   isLoading: homeState.isLoadingTrending,
+                  isLoadingMore: homeState.isLoadingMoreTrending,
+                  hasMore: homeState.hasMoreTrending,
                   error: homeState.trendingError,
                   onRetry: () =>
                       ref.read(homeProvider.notifier).getTrendingMovies(),
+                  onLoadMore: () =>
+                      ref.read(homeProvider.notifier).getTrendingMovies(loadMore: true),
                 ),
 
                 const SizedBox(height: AppInsets.xxl),

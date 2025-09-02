@@ -293,4 +293,147 @@ class TmdbAuthService {
       throw Exception('Error getting rated movies: $e');
     }
   }
+
+  /// Get watch providers for a movie
+  Future<Map<String, dynamic>?> getWatchProviders({
+    required int movieId,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '${ApiConstants.watchProviders}/$movieId/watch/providers',
+      );
+      
+      return response.data['results'];
+    } catch (e) {
+      // Return null if no watch providers found
+      return null;
+    }
+  }
+
+  /// Get user's lists
+  Future<List<dynamic>> getUserLists({
+    required int accountId,
+    required String sessionId,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.getUserLists.replaceAll('{account_id}', accountId.toString()),
+        queryParameters: {
+          'session_id': sessionId,
+          'page': page,
+        },
+      );
+      
+      return response.data['results'] ?? [];
+    } catch (e) {
+      throw Exception('Error getting user lists: $e');
+    }
+  }
+
+  /// Create a new list
+  Future<Map<String, dynamic>> createList({
+    required String name,
+    required String description,
+    required String sessionId,
+    String language = 'en',
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.createList,
+        data: {
+          'name': name,
+          'description': description,
+          'language': language,
+        },
+        queryParameters: {
+          'session_id': sessionId,
+        },
+      );
+      
+      return response.data;
+    } catch (e) {
+      throw Exception('Error creating list: $e');
+    }
+  }
+
+  /// Get list details
+  Future<Map<String, dynamic>> getList({
+    required int listId,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '${ApiConstants.getList}/$listId',
+      );
+      
+      return response.data;
+    } catch (e) {
+      throw Exception('Error getting list: $e');
+    }
+  }
+
+  /// Add movie to list
+  Future<bool> addMovieToList({
+    required int listId,
+    required int movieId,
+    required String sessionId,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '${ApiConstants.addMovieToList}/$listId/add_item',
+        data: {
+          'media_id': movieId,
+        },
+        queryParameters: {
+          'session_id': sessionId,
+        },
+      );
+      
+      return response.data['success'] == true;
+    } catch (e) {
+      throw Exception('Error adding movie to list: $e');
+    }
+  }
+
+  /// Remove movie from list
+  Future<bool> removeMovieFromList({
+    required int listId,
+    required int movieId,
+    required String sessionId,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '${ApiConstants.removeMovieFromList}/$listId/remove_item',
+        data: {
+          'media_id': movieId,
+        },
+        queryParameters: {
+          'session_id': sessionId,
+        },
+      );
+      
+      return response.data['success'] == true;
+    } catch (e) {
+      throw Exception('Error removing movie from list: $e');
+    }
+  }
+
+  /// Delete a list
+  Future<bool> deleteList({
+    required int listId,
+    required String sessionId,
+  }) async {
+    try {
+      final response = await _dio.delete(
+        '${ApiConstants.deleteList}/$listId',
+        queryParameters: {
+          'session_id': sessionId,
+        },
+      );
+      
+      return response.data['success'] == true;
+    } catch (e) {
+      throw Exception('Error deleting list: $e');
+    }
+  }
 }

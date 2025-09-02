@@ -59,8 +59,6 @@ void main() {
     });
 
     test('should validate movie rating range', () async {
-      final userFeaturesService = UserFeaturesService.instance;
-      
       // Test rating validation logic
       expect(0.4 < 0.5, isTrue); // Below minimum
       expect(10.1 > 10.0, isTrue); // Above maximum
