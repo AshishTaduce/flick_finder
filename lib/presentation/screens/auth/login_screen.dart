@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/auth_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../providers/auth_provider.dart';
 import '../../../shared/theme/app_insets.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -17,14 +18,14 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -35,22 +36,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement actual login when backend is ready
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      await ref.read(authProvider.notifier).login(
+        _usernameController.text.trim(),
+        _passwordController.text,
+      );
       
       if (mounted) {
+        widget.onLoginSuccess();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Login feature coming soon! Please continue as guest.'),
-            backgroundColor: Colors.orange,
+            content: Text('Login successful! Welcome back.'),
+            backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Login failed';
+        if (e.toString().contains('Invalid username or password')) {
+          errorMessage = 'Invalid username or password';
+        } else if (e.toString().contains('network')) {
+          errorMessage = 'Network error. Please check your connection.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login failed: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -66,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await AuthService.instance.createGuestSession();
+      await ref.read(authProvider.notifier).createGuestSession();
       widget.onLoginSuccess();
     } catch (e) {
       if (mounted) {
@@ -82,6 +93,70 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _showSignupDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Create TMDB Account'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'To access premium features like rating movies, creating watchlists, and syncing favorites, you need a TMDB account.',
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Features available with TMDB account:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text('• Rate movies and TV shows'),
+              Text('• Create and manage watchlists'),
+              Text('• Mark movies as favorites'),
+              Text('• Sync data across devices'),
+              Text('• Access personalized recommendations'),
+              SizedBox(height: 16),
+              Text(
+                'You will be redirected to TMDB\'s website to create your account. After registration, return to this app and login with your new credentials.',
+                style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Create Account'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final uri = Uri.parse('https://www.themoviedb.org/signup');
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } else {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Could not open signup page'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -125,20 +200,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   children: [
                     TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
+                      controller: _usernameController,
                       decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email),
+                        labelText: 'TMDB Username',
+                        prefixIcon: Icon(Icons.person),
                         border: OutlineInputBorder(),
+                        helperText: 'Enter your TMDB username (not email)',
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return 'Please enter your TMDB username';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return 'Please enter a valid email';
+                        if (value.length < 3) {
+                          return 'Username must be at least 3 characters';
                         }
                         return null;
                       },
@@ -148,7 +222,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: 'TMDB Password',
                         prefixIcon: const Icon(Icons.lock),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -166,10 +240,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return 'Please enter your TMDB password';
                         }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                        if (value.length < 4) {
+                          return 'Password must be at least 4 characters';
                         }
                         return null;
                       },
@@ -235,15 +309,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               // Sign up link
               TextButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Sign up feature coming soon!'),
-                      backgroundColor: Colors.blue,
-                    ),
-                  );
-                },
-                child: const Text("Don't have an account? Sign up"),
+                onPressed: _showSignupDialog,
+                child: const Text("Don't have a TMDB account? Sign up"),
               ),
             ],
           ),

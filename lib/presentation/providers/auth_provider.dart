@@ -6,6 +6,9 @@ class AuthState {
   final bool isGuest;
   final String? token;
   final String? userId;
+  final String? sessionId;
+  final String? accountId;
+  final String? username;
   final bool isLoading;
 
   const AuthState({
@@ -13,6 +16,9 @@ class AuthState {
     this.isGuest = false,
     this.token,
     this.userId,
+    this.sessionId,
+    this.accountId,
+    this.username,
     this.isLoading = false,
   });
 
@@ -21,6 +27,9 @@ class AuthState {
     bool? isGuest,
     String? token,
     String? userId,
+    String? sessionId,
+    String? accountId,
+    String? username,
     bool? isLoading,
   }) {
     return AuthState(
@@ -28,6 +37,9 @@ class AuthState {
       isGuest: isGuest ?? this.isGuest,
       token: token ?? this.token,
       userId: userId ?? this.userId,
+      sessionId: sessionId ?? this.sessionId,
+      accountId: accountId ?? this.accountId,
+      username: username ?? this.username,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -46,12 +58,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final isGuest = await AuthService.instance.isGuest();
       final token = await AuthService.instance.getToken();
       final userId = await AuthService.instance.getUserId();
+      final sessionId = await AuthService.instance.getSessionId();
+      final accountId = await AuthService.instance.getAccountId();
+      final username = await AuthService.instance.getUsername();
 
       state = state.copyWith(
         isAuthenticated: isAuthenticated,
         isGuest: isGuest,
         token: token,
         userId: userId,
+        sessionId: sessionId,
+        accountId: accountId,
+        username: username,
         isLoading: false,
       );
     } catch (e) {
@@ -79,25 +97,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(String username, String password) async {
     state = state.copyWith(isLoading: true);
     
     try {
-      final token = await AuthService.instance.login(email, password);
-      if (token != null) {
-        final userId = await AuthService.instance.getUserId();
-        
-        state = state.copyWith(
-          isAuthenticated: true,
-          isGuest: false,
-          token: token,
-          userId: userId,
-          isLoading: false,
-        );
-      } else {
-        state = state.copyWith(isLoading: false);
-        throw Exception('Login failed');
-      }
+      final result = await AuthService.instance.login(username, password);
+      final sessionId = result['session_id'];
+      
+      final userId = await AuthService.instance.getUserId();
+      final accountId = await AuthService.instance.getAccountId();
+      final storedUsername = await AuthService.instance.getUsername();
+      
+      state = state.copyWith(
+        isAuthenticated: true,
+        isGuest: false,
+        token: sessionId,
+        userId: userId,
+        sessionId: sessionId,
+        accountId: accountId,
+        username: storedUsername,
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false);
       rethrow;

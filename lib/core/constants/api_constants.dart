@@ -21,6 +21,22 @@ class ApiConstants {
   static const String personDetails = '/person'; // /person/{person_id}
   static const String personMovies = '/person'; // /person/{person_id}/movie_credits
 
+  // Authentication endpoints
+  static const String createRequestToken = '/authentication/token/new';
+  static const String createSession = '/authentication/session/new';
+  static const String validateWithLogin = '/authentication/token/validate_with_login';
+  static const String deleteSession = '/authentication/session';
+  static const String accountDetails = '/account';
+  
+  // User-specific endpoints
+  static const String accountStates = '/movie'; // /movie/{movie_id}/account_states
+  static const String addToWatchlist = '/account/{account_id}/watchlist';
+  static const String addToFavorites = '/account/{account_id}/favorite';
+  static const String rateMovie = '/movie'; // /movie/{movie_id}/rating
+  static const String getWatchlist = '/account/{account_id}/watchlist/movies';
+  static const String getFavorites = '/account/{account_id}/favorite/movies';
+  static const String getRatedMovies = '/account/{account_id}/rated/movies';
+
   // TMDB Genre IDs mapping
   static const Map<String, int> movieGenreIds = {
     'Action': 28,
