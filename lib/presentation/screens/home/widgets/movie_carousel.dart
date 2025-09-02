@@ -5,6 +5,7 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_insets.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/custom_image_widget.dart';
+import '../../../../shared/widgets/skeleton_loader.dart';
 import '../../movie_detail/movie_detail_screen.dart';
 
 class MovieCarousel extends StatefulWidget {
@@ -279,11 +280,103 @@ class _MovieCarouselState extends State<MovieCarousel> {
   }
 
   Widget _buildLoadingCarousel(Size size) {
-    return Container(
+    return SizedBox(
       height: size.height * 0.6,
-      color: Colors.grey[300],
-      child: const Center(
-        child: CircularProgressIndicator(),
+      child: Stack(
+        children: [
+          // Background skeleton
+          const SkeletonLoader(
+            width: double.infinity,
+            height: double.infinity,
+            borderRadius: BorderRadius.zero,
+          ),
+          
+          // Bottom gradient overlay
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.3),
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Content skeleton
+          Positioned(
+            bottom: 80,
+            left: AppInsets.md,
+            right: AppInsets.md,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title skeleton
+                const SkeletonLoader(
+                  width: 250,
+                  height: 32,
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                ),
+                const SizedBox(height: AppInsets.sm),
+                // Rating skeleton
+                Row(
+                  children: [
+                    const SkeletonLoader(
+                      width: 60,
+                      height: 20,
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    ),
+                    const SizedBox(width: AppInsets.md),
+                    const SkeletonLoader(
+                      width: 40,
+                      height: 20,
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppInsets.sm),
+                // Description skeleton
+                Column(
+                  children: List.generate(3, (index) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: SkeletonLoader(
+                      width: index == 2 ? 200 : double.infinity,
+                      height: 16,
+                      borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    ),
+                  )),
+                ),
+              ],
+            ),
+          ),
+          
+          // Page indicators skeleton
+          Positioned(
+            bottom: AppInsets.md,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (index) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: const SkeletonLoader(
+                  width: 8,
+                  height: 8,
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                ),
+              )),
+            ),
+          ),
+        ],
       ),
     );
   }

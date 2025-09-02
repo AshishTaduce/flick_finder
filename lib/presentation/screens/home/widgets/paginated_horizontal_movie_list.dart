@@ -3,6 +3,7 @@ import '../../../../domain/entities/movie.dart';
 import '../../../../shared/theme/app_insets.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/movie_card.dart';
+import '../../../../shared/widgets/skeleton_loader.dart';
 
 class PaginatedHorizontalMovieList extends StatefulWidget {
   final String title;
@@ -109,11 +110,10 @@ class _PaginatedHorizontalMovieListState extends State<PaginatedHorizontalMovieL
       itemCount: widget.movies.length + (widget.isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == widget.movies.length) {
-          // Loading indicator at the end
+          // Loading skeleton at the end
           return Container(
-            width: 120,
             margin: const EdgeInsets.only(right: AppInsets.md),
-            child: const Center(child: CircularProgressIndicator()),
+            child: const MovieCardSkeleton(width: 120, height: 180),
           );
         }
 
@@ -135,14 +135,8 @@ class _PaginatedHorizontalMovieListState extends State<PaginatedHorizontalMovieL
       itemCount: 5,
       itemBuilder: (context, index) {
         return Container(
-          width: 120,
-          height: 180,
           margin: EdgeInsets.only(right: index == 4 ? 0 : AppInsets.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppInsets.radiusMd),
-            color: Colors.grey[300],
-          ),
-          child: const Center(child: CircularProgressIndicator()),
+          child: const MovieCardSkeleton(width: 120, height: 180),
         );
       },
     );

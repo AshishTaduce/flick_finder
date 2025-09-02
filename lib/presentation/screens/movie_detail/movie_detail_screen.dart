@@ -11,6 +11,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_insets.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/custom_image_widget.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../home/widgets/horizontal_movie_list.dart';
 import '../../providers/movie_detail_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -304,7 +305,16 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
           ),
           const SizedBox(height: AppInsets.md),
           if (movieDetailState.isLoadingDetail)
-            const CircularProgressIndicator()
+            Column(
+              children: List.generate(4, (index) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: SkeletonLoader(
+                  width: index == 3 ? 200 : double.infinity,
+                  height: 16,
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                ),
+              )),
+            )
           else if (movieDetailState.errorDetail != null)
             Text(
               'Error: ${movieDetailState.errorDetail}',
@@ -428,7 +438,36 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
         SizedBox(
           height: 120,
           child: movieDetailState.isLoadingDetail
-              ? const Center(child: CircularProgressIndicator())
+              ? ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: AppInsets.screenPaddingHorizontal,
+                  itemCount: 5,
+                  itemBuilder: (context, index) => Container(
+                    width: 80,
+                    margin: const EdgeInsets.only(right: 12),
+                    child: const Column(
+                      children: [
+                        SkeletonLoader(
+                          width: 60,
+                          height: 60,
+                          borderRadius: BorderRadius.all(Radius.circular(30)),
+                        ),
+                        SizedBox(height: 8),
+                        SkeletonLoader(
+                          width: double.infinity,
+                          height: 12,
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
+                        ),
+                        SizedBox(height: 4),
+                        SkeletonLoader(
+                          width: 50,
+                          height: 10,
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               : movieDetailState.cast.isEmpty
               ? Center(
                   child: Text(

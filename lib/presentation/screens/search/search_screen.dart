@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../domain/entities/filter_options.dart';
 import '../../../shared/widgets/paginated_movie_grid.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../../providers/search_provider.dart';
 import '../home/widgets/error_widget.dart';
-import '../home/widgets/loading_widget.dart';
 import 'widgets/search_app_bar.dart';
 import 'widgets/filter_bottom_sheet.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -80,7 +80,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     if (state.isLoading && state.searchResults.isEmpty) {
-      return const LoadingWidget();
+      return const SearchResultSkeleton();
     }
 
     if (state.error != null && state.searchResults.isEmpty) {
