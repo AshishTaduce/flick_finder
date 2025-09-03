@@ -20,14 +20,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     // Fetch all movies when screen loads
+    _loadMoviesIfNeeded();
+  }
+
+  void _loadMoviesIfNeeded() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(homeProvider.notifier).loadAllMovies();
+      final homeState = ref.read(homeProvider);
+      // Only load if we don't have any movies and aren't already loading
+      if (homeState.popularMovies.isEmpty && 
+          homeState.nowPlayingMovies.isEmpty && 
+          homeState.trendingMovies.isEmpty && 
+          !homeState.isLoading) {
+        ref.read(homeProvider.notifier).loadAllMovies();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final homeState = ref.watch(homeProvider);
+    
+    // Ensure data is loaded when the widget builds
+    ref.listen(homeProvider, (previous, next) {
+      // If we just cleared the state (like after auth change), reload data
+      if (previous != null && 
+          previous.popularMovies.isNotEmpty && 
+          next.popularMovies.isEmpty && 
+          !next.isLoading) {
+        Future.microtask(() => ref.read(homeProvider.notifier).loadAllMovies());
+      }
+    });
 
     return RefreshIndicator(
       onRefresh: () => ref.read(homeProvider.notifier).refresh(),

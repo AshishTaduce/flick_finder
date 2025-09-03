@@ -11,6 +11,7 @@ import 'core/services/background_sync_service.dart';
 import 'core/services/deeplink_service.dart';
 import 'core/routes/app_router.dart';
 import 'presentation/widgets/nav_bar_item.dart';
+import 'presentation/providers/auth_provider.dart';
 
 import 'shared/theme/app_insets.dart';
 import 'shared/theme/app_theme.dart';
@@ -27,7 +28,7 @@ void main() async {
   await ConnectivityService.instance.initialize();
   await ImageCacheService.instance.initialize();
   await BackgroundSyncService.instance.initialize();
-  
+
   // Initialize deep link service
   await DeepLinkService().initialize();
 
@@ -40,7 +41,10 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
-    
+
+    // Initialize auth listener to handle state changes
+    ref.watch(authListenerProvider);
+
     return MaterialApp.router(
       title: 'Movie Discovery',
       theme: AppTheme.lightTheme.copyWith(
@@ -57,7 +61,7 @@ class MyApp extends ConsumerWidget {
 
 class MainScreen extends StatefulWidget {
   final Widget child;
-  
+
   const MainScreen({super.key, required this.child});
 
   @override
@@ -66,7 +70,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _getSelectedIndex(BuildContext context) {
-    final location = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+    final location = GoRouter.of(
+      context,
+    ).routerDelegate.currentConfiguration.uri.path;
     switch (location) {
       case '/home':
         return 0;
@@ -101,7 +107,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final selectedIndex = _getSelectedIndex(context);
-    
+
     return Scaffold(
       body: NetworkStatusBanner(
         child: Padding(
@@ -147,12 +153,6 @@ class _MainScreenState extends State<MainScreen> {
                     label: "Search",
                     isActive: selectedIndex == 1,
                     onTap: () => _onItemTapped(1),
-                  ),
-                  NavBarItem(
-                    icon: Icons.explore,
-                    label: "Discover",
-                    isActive: selectedIndex == 2,
-                    onTap: () => _onItemTapped(2),
                   ),
                   NavBarItem(
                     icon: Icons.person,

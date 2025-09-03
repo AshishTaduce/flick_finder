@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../data/models/hive/cached_movie_model.dart';
 import '../../data/models/hive/cached_movie_detail_model.dart';

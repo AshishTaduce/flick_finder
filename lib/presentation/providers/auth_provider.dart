@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/auth_service.dart';
+import 'home_provider.dart';
 
 class AuthState {
   final bool isAuthenticated;
@@ -136,4 +137,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier();
+});
+
+// Provider to listen to auth changes and reset home state
+final authListenerProvider = Provider<void>((ref) {
+  ref.listen<AuthState>(authProvider, (previous, next) {
+    // If authentication state changed, reset home provider
+    if (previous?.isAuthenticated != next.isAuthenticated) {
+      // Reset home state when auth changes
+      try {
+        ref.read(homeProvider.notifier).reset();
+        // Reload data after a short delay
+        Future.delayed(const Duration(milliseconds: 100), () {
+          ref.read(homeProvider.notifier).loadAllMovies();
+        });
+      } catch (e) {
+        // Provider might not be initialized yet, ignore
+      }
+    }
+  });
 });

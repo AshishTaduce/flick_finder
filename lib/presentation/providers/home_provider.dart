@@ -97,7 +97,10 @@ class HomeState {
 class HomeNotifier extends StateNotifier<HomeState> {
   final MovieRepository _repository;
 
-  HomeNotifier(this._repository) : super(const HomeState());
+  HomeNotifier(this._repository) : super(const HomeState()) {
+    // Auto-load movies when the notifier is created
+    loadAllMovies();
+  }
 
   Future<void> loadAllMovies() async {
     await Future.wait([
@@ -205,6 +208,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   Future<void> refresh() async {
     await loadAllMovies();
+  }
+
+  void reset() {
+    state = const HomeState();
   }
 }
 

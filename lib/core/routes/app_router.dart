@@ -1,9 +1,11 @@
+import 'package:flick_finder/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/entities/cast.dart';
 import '../../presentation/providers/auth_provider.dart';
+import '../../presentation/providers/home_provider.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/movie_detail/movie_detail_screen.dart';
@@ -88,19 +90,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
         routes: [
           GoRoute(
-            path: '/home',
+            path: AppRoutes.home,
             builder: (context, state) => const HomeScreenWrapper(),
           ),
           GoRoute(
-            path: '/search',
+            path: AppRoutes.search,
             builder: (context, state) => const SearchScreenWrapper(),
           ),
           GoRoute(
-            path: '/discover',
-            builder: (context, state) => const DiscoverScreenWrapper(),
-          ),
-          GoRoute(
-            path: '/profile',
+            path: AppRoutes.profile,
             builder: (context, state) => const ProfileScreen(),
             routes: [
               // Profile sub-routes - these will be full screen but maintain navigation stack
@@ -133,8 +131,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final movieIdStr = state.pathParameters['movieId']!;
           final movieId = int.parse(movieIdStr);
-          
-          // Create a placeholder movie for the screen
+
+          // Placeholder movie for the screen while in loading state
           final movie = Movie(
             id: movieId,
             title: 'Loading...',
@@ -198,11 +196,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 });
 
 // Wrapper classes for the main screens
-class HomeScreenWrapper extends StatelessWidget {
+class HomeScreenWrapper extends ConsumerWidget {
   const HomeScreenWrapper({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Ensure home data is loaded when navigating to home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final homeState = ref.read(homeProvider);
+      if (homeState.popularMovies.isEmpty && 
+          homeState.nowPlayingMovies.isEmpty && 
+          homeState.trendingMovies.isEmpty && 
+          !homeState.isLoading) {
+        ref.read(homeProvider.notifier).loadAllMovies();
+      }
+    });
+    
     return HomeScreen(
       onNavigateToSearch: () {
         context.go('/search');
@@ -217,21 +226,5 @@ class SearchScreenWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SearchScreen();
-  }
-}
-
-class DiscoverScreenWrapper extends StatelessWidget {
-  const DiscoverScreenWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Return a placeholder for now - you can implement discover functionality later
-    return const Center(
-      child: Text(
-        'Discover Screen\nComing Soon!',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 18),
-      ),
-    );
   }
 }

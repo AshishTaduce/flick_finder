@@ -47,12 +47,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context,
           'Login successful! Welcome back.',
         );
-        // Call the success callback after a short delay to ensure state is updated
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            widget.onLoginSuccess();
-          }
-        });
+        // Call the success callback immediately - the auth state is already updated
+        widget.onLoginSuccess();
       }
     } catch (e) {
       if (mounted) {
@@ -85,12 +81,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context,
           'Welcome! You can now browse movies.',
         );
-        // Call the success callback after a short delay to ensure state is updated
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            widget.onLoginSuccess();
-          }
-        });
+        // Call the success callback immediately - the auth state is already updated
+        widget.onLoginSuccess();
       }
     } catch (e) {
       if (mounted) {
