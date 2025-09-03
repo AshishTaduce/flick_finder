@@ -22,7 +22,7 @@ class NavBarItem extends StatelessWidget {
         : theme.foregroundColor?.withAlpha(100);
     final fontWeight = isActive ? FontWeight.w600 : FontWeight.normal;
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,

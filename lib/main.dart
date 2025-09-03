@@ -142,23 +142,29 @@ class _MainScreenState extends State<MainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  NavBarItem(
-                    icon: Icons.home,
-                    label: "Home",
-                    isActive: selectedIndex == 0,
-                    onTap: () => _onItemTapped(0),
+                  Expanded(
+                    child: NavBarItem(
+                      icon: Icons.home,
+                      label: "Home",
+                      isActive: selectedIndex == 0,
+                      onTap: () => _onItemTapped(0),
+                    ),
                   ),
-                  NavBarItem(
-                    icon: Icons.search,
-                    label: "Search",
-                    isActive: selectedIndex == 1,
-                    onTap: () => _onItemTapped(1),
+                  Expanded(
+                    child: NavBarItem(
+                      icon: Icons.search,
+                      label: "Search",
+                      isActive: selectedIndex == 1,
+                      onTap: () => _onItemTapped(1),
+                    ),
                   ),
-                  NavBarItem(
-                    icon: Icons.person,
-                    label: "Profile",
-                    isActive: selectedIndex == 3,
-                    onTap: () => _onItemTapped(3),
+                  Expanded(
+                    child: NavBarItem(
+                      icon: Icons.person,
+                      label: "Profile",
+                      isActive: selectedIndex == 3,
+                      onTap: () => _onItemTapped(3),
+                    ),
                   ),
                 ],
               ),
