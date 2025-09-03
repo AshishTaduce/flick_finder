@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../core/network/api_result.dart';
 import '../../domain/entities/filter_options.dart';
 import '../../domain/entities/movie.dart';
@@ -317,7 +319,7 @@ class MovieRepositoryImpl implements MovieRepository {
         await _localDataSource.saveMovies(movies, category, page: page);
       }
     } catch (e) {
-      print('Background refresh failed for $category: $e');
+      debugPrint('Background refresh failed for $category: $e');
     }
   }
 
@@ -350,7 +352,7 @@ class MovieRepositoryImpl implements MovieRepository {
       final cachedDetail = CachedMovieDetailModel.fromApiResponse(detailJson, castJson.map((c) => c as Map<String, dynamic>).toList());
       await _localDataSource.saveMovieDetail(cachedDetail);
     } catch (e) {
-      print('Failed to save movie detail to cache: $e');
+      debugPrint('Failed to save movie detail to cache: $e');
     }
   }
 
@@ -383,7 +385,7 @@ class MovieRepositoryImpl implements MovieRepository {
         await _localDataSource.updateMovie(movie);
       }
     } catch (e) {
-      print('Failed to cache search results: $e');
+      debugPrint('Failed to cache search results: $e');
     }
   }
 }

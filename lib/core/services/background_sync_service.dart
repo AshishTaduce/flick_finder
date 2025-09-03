@@ -51,7 +51,7 @@ class BackgroundSyncService {
 
   void _onNetworkRestored() {
     if (kDebugMode) {
-      print('Network restored - starting background sync');
+      debugPrint('Network restored - starting background sync');
     }
     
     // Perform immediate sync when network is restored
@@ -68,7 +68,7 @@ class BackgroundSyncService {
     
     try {
       if (kDebugMode) {
-        print('Starting background sync...');
+        debugPrint('Starting background sync...');
       }
 
       final futures = <Future>[];
@@ -82,11 +82,11 @@ class BackgroundSyncService {
       await Future.wait(futures);
       
       if (kDebugMode) {
-        print('Background sync completed successfully');
+        debugPrint('Background sync completed successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Background sync failed: $e');
+        debugPrint('Background sync failed: $e');
       }
     } finally {
       _isSyncing = false;
@@ -101,13 +101,13 @@ class BackgroundSyncService {
       
       if (!isStale) {
         if (kDebugMode) {
-          print('Category $category is fresh, skipping sync');
+          debugPrint('Category $category is fresh, skipping sync');
         }
         return;
       }
 
       if (kDebugMode) {
-        print('Syncing category: $category');
+        debugPrint('Syncing category: $category');
       }
 
       // Fetch fresh data from API
@@ -126,12 +126,12 @@ class BackgroundSyncService {
         await _localDataSource.saveMovies(movies, category, page: 1);
         
         if (kDebugMode) {
-          print('Synced ${movies.length} movies for category $category');
+          debugPrint('Synced ${movies.length} movies for category $category');
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to sync category $category: $e');
+        debugPrint('Failed to sync category $category: $e');
       }
     }
   }
@@ -166,7 +166,7 @@ class BackgroundSyncService {
 
     try {
       if (kDebugMode) {
-        print('Syncing details for ${movieIds.length} movies');
+        debugPrint('Syncing details for ${movieIds.length} movies');
       }
 
       final futures = <Future>[];
@@ -185,11 +185,11 @@ class BackgroundSyncService {
       }
       
       if (kDebugMode) {
-        print('Movie details sync completed');
+        debugPrint('Movie details sync completed');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Movie details sync failed: $e');
+        debugPrint('Movie details sync failed: $e');
       }
     }
   }
@@ -229,7 +229,7 @@ class BackgroundSyncService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to sync movie detail $movieId: $e');
+        debugPrint('Failed to sync movie detail $movieId: $e');
       }
     }
   }
@@ -237,7 +237,7 @@ class BackgroundSyncService {
   Future<void> forceSync() async {
     if (!_connectivityService.isOnline) {
       if (kDebugMode) {
-        print('Cannot force sync - device is offline');
+        debugPrint('Cannot force sync - device is offline');
       }
       return;
     }

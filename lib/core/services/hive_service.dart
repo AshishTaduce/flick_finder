@@ -95,9 +95,9 @@ class HiveService {
       }
       await _cacheMetadataBox!.deleteAll(staleMetadataKeys);
 
-      print('Cache cleanup completed. Removed ${staleMovieKeys.length} movies, ${staleDetailKeys.length} details, ${staleMetadataKeys.length} metadata entries.');
+      debugPrint('Cache cleanup completed. Removed ${staleMovieKeys.length} movies, ${staleDetailKeys.length} details, ${staleMetadataKeys.length} metadata entries.');
     } catch (e) {
-      print('Error during cache cleanup: $e');
+      debugPrint('Error during cache cleanup: $e');
     }
   }
 

@@ -27,7 +27,7 @@ class DioClient {
     dio.interceptors.add(
       RetryInterceptor(
         dio: dio,
-        logPrint: kDebugMode ? print : null,
+        logPrint: kDebugMode ? debugPrint : null,
         retries: 3,
         retryDelays: const [
           Duration(seconds: 1),
@@ -41,7 +41,7 @@ class DioClient {
               error.type == DioExceptionType.receiveTimeout ||
               error.type == DioExceptionType.connectionError) {
             if (kDebugMode) {
-              print('Retrying request due to ${error.type} (attempt $attempt)');
+              debugPrint('Retrying request due to ${error.type} (attempt $attempt)');
             }
             return true;
           }
@@ -52,7 +52,7 @@ class DioClient {
             // Retry on server errors (5xx) and rate limiting (429)
             if ((statusCode >= 500 && statusCode < 600) || statusCode == 429) {
               if (kDebugMode) {
-                print('Retrying request due to status code $statusCode (attempt $attempt)');
+                debugPrint('Retrying request due to status code $statusCode (attempt $attempt)');
               }
               return true;
             }

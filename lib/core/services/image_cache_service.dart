@@ -28,7 +28,7 @@ class ImageCacheService {
       _cleanupExpiredImages();
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing image cache: $e');
+        debugPrint('Error initializing image cache: $e');
       }
     }
   }
@@ -79,7 +79,7 @@ class ImageCacheService {
       return cachedFile.path;
     } catch (e) {
       if (kDebugMode) {
-        print('Error caching image $imagePath: $e');
+        debugPrint('Error caching image $imagePath: $e');
       }
       return null;
     }
@@ -128,14 +128,14 @@ class ImageCacheService {
           if (age > cacheExpiry) {
             await file.delete();
             if (kDebugMode) {
-              print('Deleted expired cached image: ${file.path}');
+              debugPrint('Deleted expired cached image: ${file.path}');
             }
           }
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error cleaning up expired images: $e');
+        debugPrint('Error cleaning up expired images: $e');
       }
     }
   }
@@ -168,13 +168,13 @@ class ImageCacheService {
           totalSize -= entry.value.size;
           
           if (kDebugMode) {
-            print('Deleted cached image for size limit: ${entry.key.path}');
+            debugPrint('Deleted cached image for size limit: ${entry.key.path}');
           }
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking cache size: $e');
+        debugPrint('Error checking cache size: $e');
       }
     }
   }
@@ -225,11 +225,11 @@ class ImageCacheService {
         }
       }
       if (kDebugMode) {
-        print('Image cache cleared');
+        debugPrint('Image cache cleared');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error clearing image cache: $e');
+        debugPrint('Error clearing image cache: $e');
       }
     }
   }

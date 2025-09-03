@@ -44,7 +44,7 @@ class ConnectivityService {
       _handleConnectivityChange(results);
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking connectivity: $e');
+        debugPrint('Error checking connectivity: $e');
       }
       _updateStatus(NetworkStatus.unknown);
     }
@@ -69,7 +69,7 @@ class ConnectivityService {
       _networkStatusController.add(status);
       
       if (kDebugMode) {
-        print('Network status changed: $previousStatus -> $status');
+        debugPrint('Network status changed: $previousStatus -> $status');
       }
       
       // Trigger background sync when coming back online
@@ -81,7 +81,7 @@ class ConnectivityService {
 
   void _onNetworkRestored() {
     if (kDebugMode) {
-      print('Network restored - triggering background sync');
+      debugPrint('Network restored - triggering background sync');
     }
     // This will be used to trigger background sync
     // We'll implement this in the sync service
@@ -95,7 +95,7 @@ class ConnectivityService {
              results.contains(ConnectivityResult.ethernet);
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking internet connection: $e');
+        debugPrint('Error checking internet connection: $e');
       }
       return false;
     }

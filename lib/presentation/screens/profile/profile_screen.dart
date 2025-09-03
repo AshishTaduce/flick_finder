@@ -229,13 +229,13 @@ class ProfileScreen extends ConsumerWidget {
                         await ref.read(authProvider.notifier).logout();
                       }
                     },
-
-                    child: Text(authState.isGuest ? 'End Guest Session' : 'Logout'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: AppInsets.md),
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                     ),
+
+                    child: Text(authState.isGuest ? 'End Guest Session' : 'Logout'),
                   ),
                 ),
               ),
