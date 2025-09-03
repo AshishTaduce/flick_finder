@@ -1,20 +1,12 @@
-import 'dart:ui';
-
-import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/services/hive_service.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/image_cache_service.dart';
 import 'core/services/background_sync_service.dart';
-import 'presentation/screens/home/home_screen.dart';
-import 'presentation/screens/search/search_screen.dart';
-import 'presentation/screens/profile/profile_screen.dart';
-import 'presentation/widgets/nav_bar_item.dart';
-import 'presentation/widgets/auth_wrapper.dart';
-import 'shared/theme/app_insets.dart';
+import 'core/router/app_router.dart';
+import 'shared/theme/app_theme_extension.dart';
 import 'shared/theme/app_theme.dart';
-import 'shared/widgets/network_status_indicator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,13 +20,15 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Movie Discovery',
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = AppRouter.createRouter(ref);
+    
+    return MaterialApp.router(
+      title: 'Flick Finder',
       theme: AppTheme.lightTheme.copyWith(
         extensions: [MovieThemeExtension.light],
       ),
@@ -42,103 +36,7 @@ class MyApp extends StatelessWidget {
         extensions: [MovieThemeExtension.dark],
       ),
       themeMode: ThemeMode.system,
-      home: const AuthWrapper(child: MainScreen()),
-    );
-  }
-}
-
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
-  void _navigateToTab(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Widget> screens = [
-      HomeScreen(onNavigateToSearch: () => _navigateToTab(1)),
-      const SearchScreen(),
-      const Center(child: Text('Discover')), // Placeholder
-      const ProfileScreen(),
-    ];
-
-    return Scaffold(
-      body: NetworkStatusBanner(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: AppInsets.xxl),
-          child: IndexedStack(index: _currentIndex, children: screens),
-        ),
-      ),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.miniCenterDocked,
-      // Navigation Bar
-      floatingActionButton: Container(
-        margin: const EdgeInsets.symmetric(
-          // horizontal: AppInsets.lg,
-          // vertical: AppInsets.md,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(AppInsets.md),
-            topRight: Radius.circular(AppInsets.md),
-          ),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).surfaceVariant.withAlpha(150),
-                border: Border.all(
-                  color: Theme.of(context).primaryColor.withAlpha(50),
-                  width: 01,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppInsets.sm,
-                vertical: AppInsets.sm,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  NavBarItem(
-                    icon: Icons.home,
-                    label: "Home",
-                    isActive: _currentIndex == 0,
-                    onTap: () => _navigateToTab(0),
-                  ),
-                  NavBarItem(
-                    icon: Icons.search,
-                    label: "Search",
-                    isActive: _currentIndex == 1,
-                    onTap: () => _navigateToTab(1),
-                  ),
-                  NavBarItem(
-                    icon: Icons.playlist_play,
-                    label: "Watch List",
-                    isActive: _currentIndex == 2,
-                    onTap: () => _navigateToTab(2),
-                  ),
-                  NavBarItem(
-                    icon: Icons.person,
-                    label: "Profile",
-                    isActive: _currentIndex == 3,
-                    onTap: () => _navigateToTab(3),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      routerConfig: router,
     );
   }
 }

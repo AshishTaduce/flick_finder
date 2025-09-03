@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../domain/entities/movie.dart';
 import '../../../../shared/theme/app_colors.dart';
@@ -6,7 +7,6 @@ import '../../../../shared/theme/app_insets.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/custom_image_widget.dart';
 import '../../../../shared/widgets/skeleton_loader.dart';
-import '../../movie_detail/movie_detail_screen.dart';
 
 class MovieCarousel extends StatefulWidget {
   final List<Movie> movies;
@@ -135,12 +135,7 @@ class _MovieCarouselState extends State<MovieCarousel> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MovieDetailScreen(movie: movie),
-          ),
-        );
+        context.go('/movie/${movie.id}');
       },
       child: Container(
         width: size.width,

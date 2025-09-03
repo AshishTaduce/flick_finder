@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../../shared/theme/app_insets.dart';
-import '../watchlist/watchlist_screen.dart';
-import '../favorites/favorites_screen.dart';
-import '../rated/rated_movies_screen.dart';
-import '../settings/settings_screen.dart';
+
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -107,12 +105,7 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: const Text('Movies you want to watch'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WatchlistScreen(),
-                    ),
-                  );
+                  context.go('/watchlist');
                 },
               ),
 
@@ -122,12 +115,7 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: const Text('Movies you love'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FavoritesScreen(),
-                    ),
-                  );
+                  context.go('/favorites');
                 },
               ),
 
@@ -137,12 +125,7 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: const Text('Movies you\'ve rated'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RatedMoviesScreen(),
-                    ),
-                  );
+                  context.go('/rated');
                 },
               ),
             ],
@@ -211,12 +194,7 @@ class ProfileScreen extends ConsumerWidget {
               subtitle: const Text('Content preferences'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
-                );
+                context.go('/settings');
               },
             ),
 
