@@ -1,7 +1,6 @@
 import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/watch_providers_service.dart';
 import '../../../core/services/user_features_service.dart';
@@ -19,6 +18,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/watch_providers_dialog.dart';
 import '../../widgets/share_movie_dialog.dart';
 import '../../widgets/add_to_list_dialog.dart';
+import '../person_movies/person_movies_screen.dart';
 
 class MovieDetailScreen extends ConsumerStatefulWidget {
   final Movie movie;
@@ -507,7 +507,12 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
   Widget _buildCastCard(Cast castMember, ThemeData theme, bool isLast) {
     return GestureDetector(
       onTap: () {
-        context.go('/person/${castMember.id}');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PersonMoviesScreen(person: castMember),
+          ),
+        );
       },
       child: Container(
         width: 80,

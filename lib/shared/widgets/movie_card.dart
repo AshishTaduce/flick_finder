@@ -1,8 +1,8 @@
 import 'package:flick_finder/shared/theme/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../domain/entities/movie.dart';
+import '../../presentation/screens/movie_detail/movie_detail_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_insets.dart';
 import 'custom_image_widget.dart';
@@ -36,7 +36,12 @@ class _MovieCardState extends State<MovieCard> {
 
     return GestureDetector(
       onTap: () {
-        context.go('/movie/${widget.movie.id}');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MovieDetailScreen(movie: widget.movie),
+          ),
+        );
       },
       child: Hero(
         tag: 'movie_poster_${widget.movie.id}',
