@@ -284,11 +284,12 @@ class _MovieCarouselState extends State<MovieCarousel> {
       height: size.height * 0.6,
       child: Stack(
         children: [
-          // Background skeleton
-          const SkeletonLoader(
+          // Background skeleton with wave effect
+          WaveSkeletonLoader(
             width: double.infinity,
             height: double.infinity,
             borderRadius: BorderRadius.zero,
+            waveCount: 2,
           ),
           
           // Bottom gradient overlay
@@ -312,54 +313,70 @@ class _MovieCarouselState extends State<MovieCarousel> {
             ),
           ),
           
-          // Content skeleton
+          // Content skeleton with staggered animation
           Positioned(
             bottom: 80,
             left: AppInsets.md,
             right: AppInsets.md,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title skeleton
-                const SkeletonLoader(
-                  width: 250,
-                  height: 32,
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
-                ),
-                const SizedBox(height: AppInsets.sm),
-                // Rating skeleton
-                Row(
-                  children: [
-                    const SkeletonLoader(
-                      width: 60,
-                      height: 20,
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
+            child: TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 800),
+              tween: Tween(begin: 0.0, end: 1.0),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, 30 * (1 - value)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title skeleton
+                        SkeletonLoader(
+                          width: 250,
+                          height: 32,
+                          borderRadius: const BorderRadius.all(Radius.circular(4)),
+                          period: const Duration(milliseconds: 1200),
+                        ),
+                        const SizedBox(height: AppInsets.sm),
+                        // Rating skeleton
+                        Row(
+                          children: [
+                            SkeletonLoader(
+                              width: 60,
+                              height: 20,
+                              borderRadius: const BorderRadius.all(Radius.circular(4)),
+                              period: const Duration(milliseconds: 1400),
+                            ),
+                            const SizedBox(width: AppInsets.md),
+                            SkeletonLoader(
+                              width: 40,
+                              height: 20,
+                              borderRadius: const BorderRadius.all(Radius.circular(4)),
+                              period: const Duration(milliseconds: 1600),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppInsets.sm),
+                        // Description skeleton
+                        Column(
+                          children: List.generate(3, (index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: SkeletonLoader(
+                              width: index == 2 ? 200 : double.infinity,
+                              height: 16,
+                              borderRadius: const BorderRadius.all(Radius.circular(4)),
+                              period: Duration(milliseconds: 1800 + (index * 200)),
+                            ),
+                          )),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppInsets.md),
-                    const SkeletonLoader(
-                      width: 40,
-                      height: 20,
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppInsets.sm),
-                // Description skeleton
-                Column(
-                  children: List.generate(3, (index) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: SkeletonLoader(
-                      width: index == 2 ? 200 : double.infinity,
-                      height: 16,
-                      borderRadius: const BorderRadius.all(Radius.circular(4)),
-                    ),
-                  )),
-                ),
-              ],
+                  ),
+                );
+              },
             ),
           ),
           
-          // Page indicators skeleton
+          // Page indicators skeleton with pulsing effect
           Positioned(
             bottom: AppInsets.md,
             left: 0,
@@ -368,10 +385,11 @@ class _MovieCarouselState extends State<MovieCarousel> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (index) => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                child: const SkeletonLoader(
+                child: PulsingSkeletonLoader(
                   width: 8,
                   height: 8,
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  duration: Duration(milliseconds: 1000 + (index * 200)),
                 ),
               )),
             ),

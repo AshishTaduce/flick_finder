@@ -136,7 +136,7 @@ class MovieRepositoryImpl implements MovieRepository {
     try {
       // 1. Always return cached detail first (if available)
       final cachedResult = await _localDataSource.getMovieDetail(movieId);
-      
+
       CachedMovieDetailModel? cachedDetail;
       if (cachedResult is Success<CachedMovieDetailModel?> && cachedResult.data != null) {
         cachedDetail = cachedResult.data!;
@@ -175,11 +175,12 @@ class MovieRepositoryImpl implements MovieRepository {
           final creditsModel = successCreditsResult.data;
           // Save to cache with cast
           _saveMovieDetailToCache(
-            detailModel.toJson(), 
-            creditsModel.cast.map((c) => c.toJson()).toList()
+            detailModel.toJson(),
+            creditsModel.cast.map((c) => c.toJson()).toList(),
           );
           return Success(detailModel.toEntity(cast: creditsModel.cast));
-        } else {
+        }
+        else {
           // Save to cache without cast
           _saveMovieDetailToCache(detailModel.toJson(), []);
           return Success(detailModel.toEntity());
@@ -193,7 +194,7 @@ class MovieRepositoryImpl implements MovieRepository {
           return Failure(failureDetailResult.message, code: failureDetailResult.code);
         }
       }
-      
+
       return Failure('Unknown error occurred');
     } catch (e) {
       return Failure('Failed to get movie details: ${e.toString()}');
@@ -343,10 +344,10 @@ class MovieRepositoryImpl implements MovieRepository {
 
   Future<void> _saveMovieDetailToCache(
     Map<String, dynamic> detailJson,
-    List<Map<String, dynamic>> castJson,
+    List castJson,
   ) async {
     try {
-      final cachedDetail = CachedMovieDetailModel.fromApiResponse(detailJson, castJson);
+      final cachedDetail = CachedMovieDetailModel.fromApiResponse(detailJson, castJson.map((c) => c as Map<String, dynamic>).toList());
       await _localDataSource.saveMovieDetail(cachedDetail);
     } catch (e) {
       print('Failed to save movie detail to cache: $e');

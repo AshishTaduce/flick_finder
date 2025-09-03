@@ -8,14 +8,12 @@ import '../../data/repositories/movie_repository_impl.dart';
 import '../../data/datasources/remote/movie_remote_datasource.dart';
 import '../../data/datasources/local/movie_local_datasource.dart';
 
-// Provider for movie repository
 final movieRepositoryProvider = Provider<MovieRepository>((ref) {
   final remoteDataSource = MovieRemoteDataSource();
   final localDataSource = MovieLocalDataSource();
   return MovieRepositoryImpl(remoteDataSource, localDataSource);
 });
 
-// State classes
 class MovieDetailState {
   final MovieDetail? movieDetail;
   final List<Cast> cast;
@@ -64,7 +62,6 @@ class MovieDetailState {
   }
 }
 
-// Movie Detail Provider
 class MovieDetailNotifier extends StateNotifier<MovieDetailState> {
   final MovieRepository _repository;
   final int movieId;

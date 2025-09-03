@@ -92,11 +92,16 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
       surfaceTintColor: theme.appBarTheme.foregroundColor,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
-        title: Text(
-          movieDetail?.title ?? widget.movie.title,
-          style: AppTypography.headlineMedium,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppInsets.lg),
+          child: FittedBox(
+            child: Text(
+              movieDetail?.title ?? widget.movie.title,
+              style: AppTypography.headlineMedium,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ),
         background: Stack(
           fit: StackFit.expand,

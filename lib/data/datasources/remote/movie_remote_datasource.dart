@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/constants/api_constants.dart';
@@ -147,10 +148,16 @@ class MovieRemoteDataSource {
     try {
       final response = await _dio.get('${ApiConstants.movieDetails}/$movieId');
 
-      final movieDetail = MovieDetailModel.fromJson(response.data);
+      if (response.data == null) {
+        return Failure('No data received from server');
+      }
+      debugPrint("Response Data: ${response.data}");
+      final movieDetail = MovieDetailModel.fromJson(response.data as Map<String, dynamic>);
       return Success(movieDetail);
     } on DioException catch (e) {
       return Failure(_handleDioError(e));
+    } on TypeError catch (e) {
+      return Failure('Data parsing error: ${e.toString()}');
     } catch (e) {
       return Failure('Unexpected error: ${e.toString()}');
     }
