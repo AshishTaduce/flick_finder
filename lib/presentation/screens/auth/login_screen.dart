@@ -43,11 +43,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       
       if (mounted) {
-        widget.onLoginSuccess();
         SnackbarUtils.showSuccess(
           context,
           'Login successful! Welcome back.',
         );
+        // Call the success callback after a short delay to ensure state is updated
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            widget.onLoginSuccess();
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -75,7 +80,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref.read(authProvider.notifier).createGuestSession();
-      widget.onLoginSuccess();
+      if (mounted) {
+        SnackbarUtils.showSuccess(
+          context,
+          'Welcome! You can now browse movies.',
+        );
+        // Call the success callback after a short delay to ensure state is updated
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            widget.onLoginSuccess();
+          }
+        });
+      }
     } catch (e) {
       if (mounted) {
         SnackbarUtils.showError(

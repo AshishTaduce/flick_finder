@@ -3,18 +3,21 @@ import 'dart:ui';
 import 'package:flick_finder/shared/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'core/services/hive_service.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/image_cache_service.dart';
 import 'core/services/background_sync_service.dart';
-import 'presentation/screens/home/home_screen.dart';
-import 'presentation/screens/search/search_screen.dart';
-import 'presentation/screens/profile/profile_screen.dart';
+import 'core/services/deeplink_service.dart';
+import 'core/routes/app_router.dart';
 import 'presentation/widgets/nav_bar_item.dart';
-import 'presentation/widgets/auth_wrapper.dart';
+
 import 'shared/theme/app_insets.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/widgets/network_status_indicator.dart';
+
+// Global navigator key for deep link navigation
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,16 +27,21 @@ void main() async {
   await ConnectivityService.instance.initialize();
   await ImageCacheService.instance.initialize();
   await BackgroundSyncService.instance.initialize();
+  
+  // Initialize deep link service
+  await DeepLinkService().initialize();
 
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(goRouterProvider);
+    
+    return MaterialApp.router(
       title: 'Movie Discovery',
       theme: AppTheme.lightTheme.copyWith(
         extensions: [MovieThemeExtension.light],
@@ -42,51 +50,70 @@ class MyApp extends StatelessWidget {
         extensions: [MovieThemeExtension.dark],
       ),
       themeMode: ThemeMode.system,
-      home: const AuthWrapper(child: MainScreen()),
+      routerConfig: router,
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final Widget child;
+  
+  const MainScreen({super.key, required this.child});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  int _getSelectedIndex(BuildContext context) {
+    final location = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+    switch (location) {
+      case '/home':
+        return 0;
+      case '/search':
+        return 1;
+      case '/discover':
+        return 2;
+      case '/profile':
+        return 3;
+      default:
+        return 0;
+    }
+  }
 
-  void _navigateToTab(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+  void _onItemTapped(int index) {
+    switch (index) {
+      case 0:
+        context.go('/home');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/discover');
+        break;
+      case 3:
+        context.go('/profile');
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> screens = [
-      HomeScreen(onNavigateToSearch: () => _navigateToTab(1)),
-      const SearchScreen(),
-      const Center(child: Text('Discover')), // Placeholder
-      const ProfileScreen(),
-    ];
-
+    final selectedIndex = _getSelectedIndex(context);
+    
     return Scaffold(
       body: NetworkStatusBanner(
         child: Padding(
           padding: EdgeInsets.only(bottom: AppInsets.xxl),
-          child: IndexedStack(index: _currentIndex, children: screens),
+          child: widget.child,
         ),
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,
       // Navigation Bar
       floatingActionButton: Container(
-        margin: const EdgeInsets.symmetric(
-          // horizontal: AppInsets.lg,
-          // vertical: AppInsets.md,
-        ),
+        margin: const EdgeInsets.symmetric(),
         child: ClipRRect(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(AppInsets.md),
@@ -112,26 +139,26 @@ class _MainScreenState extends State<MainScreen> {
                   NavBarItem(
                     icon: Icons.home,
                     label: "Home",
-                    isActive: _currentIndex == 0,
-                    onTap: () => _navigateToTab(0),
+                    isActive: selectedIndex == 0,
+                    onTap: () => _onItemTapped(0),
                   ),
                   NavBarItem(
                     icon: Icons.search,
                     label: "Search",
-                    isActive: _currentIndex == 1,
-                    onTap: () => _navigateToTab(1),
+                    isActive: selectedIndex == 1,
+                    onTap: () => _onItemTapped(1),
                   ),
                   NavBarItem(
-                    icon: Icons.playlist_play,
-                    label: "Watch List",
-                    isActive: _currentIndex == 2,
-                    onTap: () => _navigateToTab(2),
+                    icon: Icons.explore,
+                    label: "Discover",
+                    isActive: selectedIndex == 2,
+                    onTap: () => _onItemTapped(2),
                   ),
                   NavBarItem(
                     icon: Icons.person,
                     label: "Profile",
-                    isActive: _currentIndex == 3,
-                    onTap: () => _navigateToTab(3),
+                    isActive: selectedIndex == 3,
+                    onTap: () => _onItemTapped(3),
                   ),
                 ],
               ),

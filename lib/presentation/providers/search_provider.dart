@@ -138,7 +138,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
           hasMorePages: movies.length >= 30, // Updated page size
           isOfflineSearch: false,
         );
-      case Failure(message: final message):
+      case Failure():
         // If online search fails, try offline fallback
         await _performOfflineSearch(query, isNewSearch: isNewSearch, showOfflineMessage: true);
     }
@@ -238,7 +238,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
           hasMorePages: movies.length >= 30, // Updated page size
           isOfflineSearch: false,
         );
-      case Failure(message: final message):
+      case Failure():
         // If online discovery fails, try offline fallback
         await _performOfflineDiscovery(isNewSearch: isNewSearch, showOfflineMessage: true);
     }

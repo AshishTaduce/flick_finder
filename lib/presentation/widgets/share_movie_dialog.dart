@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../core/utils/deeplink_utils.dart';
 import '../../shared/theme/app_insets.dart';
 
 class ShareMovieDialog extends StatelessWidget {
@@ -15,9 +15,7 @@ class ShareMovieDialog extends StatelessWidget {
     this.posterPath,
   });
 
-  static const String baseUrl = 'https://flickfinder.app'; // Replace with your actual app URL
-
-  String get movieUrl => '$baseUrl/movie/$movieId';
+  String get movieUrl => DeepLinkUtils.generateMovieLink(movieId);
 
   @override
   Widget build(BuildContext context) {
@@ -89,14 +87,10 @@ class ShareMovieDialog extends StatelessWidget {
     );
   }
 
-  void _shareMovie(BuildContext context) {
-    final shareText = 'Check out "$movieTitle" on FlickFinder!\n\n$movieUrl';
-    
-    Share.share(
-      shareText,
-      subject: 'Movie Recommendation: $movieTitle',
-    );
-    
-    Navigator.of(context).pop();
+  void _shareMovie(BuildContext context) async {
+    await DeepLinkUtils.shareMovie(movieId, movieTitle);
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
   }
 }
