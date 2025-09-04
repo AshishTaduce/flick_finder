@@ -92,16 +92,12 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
       surfaceTintColor: theme.appBarTheme.foregroundColor,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppInsets.lg),
-          child: FittedBox(
-            child: Text(
-              movieDetail?.title ?? widget.movie.title,
-              style: AppTypography.headlineMedium,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+        titlePadding: const EdgeInsets.symmetric(horizontal: AppInsets.lg, vertical: AppInsets.md),
+        title: Text(
+          movieDetail?.title ?? widget.movie.title,
+          style: AppTypography.headlineSmall,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         background: Stack(
           fit: StackFit.expand,
@@ -132,7 +128,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                  colors: [Colors.transparent, theme.surfaceVariant],
                 ),
               ),
             ),
