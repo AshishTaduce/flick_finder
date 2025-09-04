@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/skeleton_loader.dart';
 
-class LoadingWidget extends StatelessWidget {
-  const LoadingWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MovieGridSkeleton();
-  }
-}
-
 class HomeLoadingWidget extends StatelessWidget {
   const HomeLoadingWidget({super.key});
 

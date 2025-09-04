@@ -5,9 +5,9 @@ import '../../../shared/widgets/movie_grid.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_insets.dart';
 import '../../../shared/theme/app_typography.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../../providers/person_movies_provider.dart';
 import '../home/widgets/error_widget.dart';
-import '../home/widgets/loading_widget.dart';
 
 class PersonMoviesScreen extends ConsumerStatefulWidget {
   final Cast person;
@@ -63,7 +63,7 @@ class _PersonMoviesScreenState extends ConsumerState<PersonMoviesScreen> {
 
   Widget _buildContent(PersonMoviesState state, ThemeData theme) {
     if (state.isLoading && state.movies.isEmpty) {
-      return const LoadingWidget();
+      return const MovieGridSkeleton();
     }
 
     if (state.error != null && state.movies.isEmpty) {

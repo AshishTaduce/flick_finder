@@ -65,9 +65,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
 
             // Content
-            Expanded(
-              child: _buildContent(searchState, theme),
-            ),
+            Expanded(child: _buildContent(searchState, theme)),
+            if (searchState.isLoadingMore)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppInsets.md),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
           ],
         ),
       ),
@@ -86,7 +91,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (state.error != null && state.searchResults.isEmpty) {
       return CustomErrorWidget(
         message: state.error!,
-        onRetry: () => ref.read(searchProvider.notifier).updateQuery(state.query),
+        onRetry: () =>
+            ref.read(searchProvider.notifier).updateQuery(state.query),
       );
     }
 
@@ -113,7 +119,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SizedBox(height: AppInsets.xs),
               Text(
-                '${results.length} ${results.length == 1 ? 'result' : 'results'} found',
+                state.totalResults > 0
+                    ? '${state.totalResults} ${state.totalResults == 1 ? 'result' : 'results'} found (showing ${results.length})'
+                    : '${results.length} ${results.length == 1 ? 'result' : 'results'} found',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.brightness == Brightness.dark
                       ? AppColors.darkTextSecondary
@@ -130,17 +138,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         const SizedBox(height: AppInsets.md),
 
         // Loading indicator if searching
-        if (state.isLoading)
-          const LinearProgressIndicator(),
+        if (state.isLoading) const LinearProgressIndicator(),
 
         // Results grid
         Expanded(
           child: PaginatedMovieGrid(
             movies: results,
-            crossAxisCount: 3,
+            crossAxisCount: 5,
             isLoadingMore: state.isLoadingMore,
             hasMorePages: state.hasMorePages,
-            onLoadMore: () => ref.read(searchProvider.notifier).loadMoreResults(),
+            onLoadMore: () =>
+                ref.read(searchProvider.notifier).loadMoreResults(),
           ),
         ),
       ],
@@ -227,66 +235,81 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     // Category chips
     for (final category in filters.selectedCategories) {
-      chips.add(_buildFilterChip(
-        category, 
-        theme,
-        onRemove: () => ref.read(searchProvider.notifier).removeCategory(category),
-      ));
+      chips.add(
+        _buildFilterChip(
+          category,
+          theme,
+          onRemove: () =>
+              ref.read(searchProvider.notifier).removeCategory(category),
+        ),
+      );
     }
 
     // Genre chips
     for (final genre in filters.selectedGenres) {
-      chips.add(_buildFilterChip(
-        genre, 
-        theme,
-        onRemove: () => ref.read(searchProvider.notifier).removeGenre(genre),
-      ));
+      chips.add(
+        _buildFilterChip(
+          genre,
+          theme,
+          onRemove: () => ref.read(searchProvider.notifier).removeGenre(genre),
+        ),
+      );
     }
 
     // Year range chip
     if (filters.yearRange.start > 2000 || filters.yearRange.end < 2025) {
-      chips.add(_buildFilterChip(
-        '${filters.yearRange.start.round()}-${filters.yearRange.end.round()}',
-        theme,
-        onRemove: () => ref.read(searchProvider.notifier).clearYearRange(),
-      ));
+      chips.add(
+        _buildFilterChip(
+          '${filters.yearRange.start.round()}-${filters.yearRange.end.round()}',
+          theme,
+          onRemove: () => ref.read(searchProvider.notifier).clearYearRange(),
+        ),
+      );
     }
 
     // Rating chip
     if (filters.minRating > 0) {
-      chips.add(_buildFilterChip(
-        '${filters.minRating}+ ⭐', 
-        theme,
-        onRemove: () => ref.read(searchProvider.notifier).clearRating(),
-      ));
+      chips.add(
+        _buildFilterChip(
+          '${filters.minRating}+ ⭐',
+          theme,
+          onRemove: () => ref.read(searchProvider.notifier).clearRating(),
+        ),
+      );
     }
 
     // Sort chip (only if not default)
     if (filters.sortBy != 'popularity.desc') {
       final sortName = _getSortDisplayName(filters.sortBy);
-      chips.add(_buildFilterChip(
-        'Sort: $sortName', 
-        theme,
-        onRemove: () => ref.read(searchProvider.notifier).resetSort(),
-      ));
+      chips.add(
+        _buildFilterChip(
+          'Sort: $sortName',
+          theme,
+          onRemove: () => ref.read(searchProvider.notifier).resetSort(),
+        ),
+      );
     }
 
     // Adult content chip
     if (filters.includeAdult) {
-      chips.add(_buildFilterChip(
-        'Adult Content', 
-        theme,
-        onRemove: () => ref.read(searchProvider.notifier).clearAdultContent(),
-      ));
+      chips.add(
+        _buildFilterChip(
+          'Adult Content',
+          theme,
+          onRemove: () => ref.read(searchProvider.notifier).clearAdultContent(),
+        ),
+      );
     }
 
     // Region chip
     if (filters.region.isNotEmpty) {
-      chips.add(_buildFilterChip(
-        'Region: ${filters.region}', 
-        theme,
-        onRemove: () => ref.read(searchProvider.notifier).clearRegion(),
-      ));
+      chips.add(
+        _buildFilterChip(
+          'Region: ${filters.region}',
+          theme,
+          onRemove: () => ref.read(searchProvider.notifier).clearRegion(),
+        ),
+      );
     }
 
     return Wrap(
@@ -310,13 +333,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return sortApiValues[apiValue] ?? 'Custom';
   }
 
-  Widget _buildFilterChip(String label, ThemeData theme, {required VoidCallback onRemove}) {
+  Widget _buildFilterChip(
+    String label,
+    ThemeData theme, {
+    required VoidCallback onRemove,
+  }) {
     return Chip(
       label: Text(label),
       backgroundColor: AppColors.primaryRed.withValues(alpha: 0.1),
-      labelStyle: AppTypography.chipLabel.copyWith(
-        color: AppColors.primaryRed,
-      ),
+      labelStyle: AppTypography.chipLabel.copyWith(color: AppColors.primaryRed),
       deleteIcon: const Icon(
         Icons.close,
         size: 16,

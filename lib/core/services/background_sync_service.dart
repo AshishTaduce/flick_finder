@@ -5,7 +5,7 @@ import 'connectivity_service.dart';
 import '../../core/network/api_result.dart';
 import '../../data/datasources/local/movie_local_datasource.dart';
 import '../../data/datasources/remote/movie_remote_datasource.dart';
-import '../../data/models/hive/cached_movie_model.dart';
+import '../../data/models/movie_model.dart';
 import '../../data/models/hive/cached_movie_detail_model.dart';
 
 class BackgroundSyncService {
@@ -116,7 +116,7 @@ class BackgroundSyncService {
       if (result != null) {
         // Convert to cached models
         final movies = result.results
-            .map<CachedMovieModel>((model) => CachedMovieModel.fromApiResponse(
+            .map((model) => MovieModel.fromApiResponse(
                   model.toJson(),
                   category: category,
                 ))

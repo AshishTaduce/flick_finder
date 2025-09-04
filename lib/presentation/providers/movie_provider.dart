@@ -60,7 +60,7 @@ class MovieNotifier extends StateNotifier<MovieState> {
     switch (result) {
       case Success(data: final movies):
         state = state.copyWith(
-          movies: movies,
+          movies: movies.results,
           isLoading: false,
         );
       case Failure(message: final message):

@@ -3,6 +3,77 @@
 part of 'movie_model.dart';
 
 // **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
+class MovieModelAdapter extends TypeAdapter<MovieModel> {
+  @override
+  final int typeId = 0;
+
+  @override
+  MovieModel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return MovieModel(
+      id: fields[0] as int,
+      title: fields[1] as String,
+      description: fields[2] as String,
+      posterPath: fields[3] as String?,
+      backdropPath: fields[4] as String?,
+      releaseDate: fields[5] as String,
+      rating: fields[6] as double,
+      voteCount: fields[7] as int,
+      genreIds: (fields[8] as List).cast<int>(),
+      cachedAt: fields[9] as DateTime?,
+      lastUpdated: fields[10] as DateTime?,
+      category: fields[11] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, MovieModel obj) {
+    writer
+      ..writeByte(12)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.title)
+      ..writeByte(2)
+      ..write(obj.description)
+      ..writeByte(3)
+      ..write(obj.posterPath)
+      ..writeByte(4)
+      ..write(obj.backdropPath)
+      ..writeByte(5)
+      ..write(obj.releaseDate)
+      ..writeByte(6)
+      ..write(obj.rating)
+      ..writeByte(7)
+      ..write(obj.voteCount)
+      ..writeByte(8)
+      ..write(obj.genreIds)
+      ..writeByte(9)
+      ..write(obj.cachedAt)
+      ..writeByte(10)
+      ..write(obj.lastUpdated)
+      ..writeByte(11)
+      ..write(obj.category);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MovieModelAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+// **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 

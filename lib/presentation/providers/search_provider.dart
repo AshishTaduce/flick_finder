@@ -25,6 +25,7 @@ class SearchState {
   final int currentPage;
   final bool hasMorePages;
   final bool isOfflineSearch;
+  final int totalResults;
 
   const SearchState({
     this.query = '',
@@ -39,6 +40,7 @@ class SearchState {
     this.currentPage = 1,
     this.hasMorePages = true,
     this.isOfflineSearch = false,
+    this.totalResults = 0,
   });
 
   SearchState copyWith({
@@ -54,6 +56,7 @@ class SearchState {
     int? currentPage,
     bool? hasMorePages,
     bool? isOfflineSearch,
+    int? totalResults,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -68,6 +71,7 @@ class SearchState {
       currentPage: currentPage ?? this.currentPage,
       hasMorePages: hasMorePages ?? this.hasMorePages,
       isOfflineSearch: isOfflineSearch ?? this.isOfflineSearch,
+      totalResults: totalResults ?? this.totalResults,
     );
   }
 }
@@ -124,18 +128,19 @@ class SearchNotifier extends StateNotifier<SearchState> {
         : await _repository.searchMovies(query, page: state.currentPage);
 
     switch (result) {
-      case Success(data: final movies):
+      case Success(data: final paginatedResponse):
         final updatedMovies = isNewSearch 
-            ? movies 
-            : [...state.searchResults, ...movies];
+            ? paginatedResponse.results 
+            : [...state.searchResults, ...paginatedResponse.results];
         
         state = state.copyWith(
           searchResults: updatedMovies,
           filteredResults: updatedMovies,
           isLoading: false,
           isLoadingMore: false,
-          currentPage: state.currentPage + 1,
-          hasMorePages: movies.length >= 30, // Updated page size
+          currentPage: paginatedResponse.page + 1,
+          hasMorePages: paginatedResponse.hasNextPage,
+          totalResults: paginatedResponse.totalResults,
           isOfflineSearch: false,
         );
       case Failure():
@@ -224,18 +229,19 @@ class SearchNotifier extends StateNotifier<SearchState> {
     final result = await _repository.discoverMovies(state.filters, page: state.currentPage);
 
     switch (result) {
-      case Success(data: final movies):
+      case Success(data: final paginatedResponse):
         final updatedMovies = isNewSearch 
-            ? movies 
-            : [...state.searchResults, ...movies];
+            ? paginatedResponse.results 
+            : [...state.searchResults, ...paginatedResponse.results];
         
         state = state.copyWith(
           searchResults: updatedMovies,
           filteredResults: updatedMovies,
           isLoading: false,
           isLoadingMore: false,
-          currentPage: state.currentPage + 1,
-          hasMorePages: movies.length >= 30, // Updated page size
+          currentPage: paginatedResponse.page + 1,
+          hasMorePages: paginatedResponse.hasNextPage,
+          totalResults: paginatedResponse.totalResults,
           isOfflineSearch: false,
         );
       case Failure():

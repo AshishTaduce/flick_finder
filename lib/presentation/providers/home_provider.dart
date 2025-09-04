@@ -121,17 +121,17 @@ class HomeNotifier extends StateNotifier<HomeState> {
     final result = await _repository.getPopularMovies(page: loadMore ? state.popularPage : 1);
 
     switch (result) {
-      case Success(data: final movies):
+      case Success(data: final paginatedResponse):
         final updatedMovies = loadMore 
-            ? [...state.popularMovies, ...movies].take(60).toList()
-            : movies;
+            ? [...state.popularMovies, ...paginatedResponse.results].take(60).toList()
+            : paginatedResponse.results;
         
         state = state.copyWith(
           popularMovies: updatedMovies,
           isLoadingPopular: false,
           isLoadingMorePopular: false,
-          popularPage: loadMore ? state.popularPage + 1 : 2,
-          hasMorePopular: updatedMovies.length < 60 && movies.isNotEmpty,
+          popularPage: paginatedResponse.page + 1,
+          hasMorePopular: paginatedResponse.hasNextPage && updatedMovies.length < 60,
         );
       case Failure(message: final message):
         state = state.copyWith(
@@ -153,17 +153,17 @@ class HomeNotifier extends StateNotifier<HomeState> {
     final result = await _repository.getNowPlayingMovies(page: loadMore ? state.nowPlayingPage : 1);
 
     switch (result) {
-      case Success(data: final movies):
+      case Success(data: final paginatedResponse):
         final updatedMovies = loadMore 
-            ? [...state.nowPlayingMovies, ...movies].take(60).toList()
-            : movies;
+            ? [...state.nowPlayingMovies, ...paginatedResponse.results].take(60).toList()
+            : paginatedResponse.results;
         
         state = state.copyWith(
           nowPlayingMovies: updatedMovies,
           isLoadingNowPlaying: false,
           isLoadingMoreNowPlaying: false,
-          nowPlayingPage: loadMore ? state.nowPlayingPage + 1 : 2,
-          hasMoreNowPlaying: updatedMovies.length < 60 && movies.isNotEmpty,
+          nowPlayingPage: paginatedResponse.page + 1,
+          hasMoreNowPlaying: paginatedResponse.hasNextPage && updatedMovies.length < 60,
         );
       case Failure(message: final message):
         state = state.copyWith(
@@ -185,17 +185,17 @@ class HomeNotifier extends StateNotifier<HomeState> {
     final result = await _repository.getTrendingMovies(page: loadMore ? state.trendingPage : 1);
 
     switch (result) {
-      case Success(data: final movies):
+      case Success(data: final paginatedResponse):
         final updatedMovies = loadMore 
-            ? [...state.trendingMovies, ...movies].take(60).toList()
-            : movies;
+            ? [...state.trendingMovies, ...paginatedResponse.results].take(60).toList()
+            : paginatedResponse.results;
         
         state = state.copyWith(
           trendingMovies: updatedMovies,
           isLoadingTrending: false,
           isLoadingMoreTrending: false,
-          trendingPage: loadMore ? state.trendingPage + 1 : 2,
-          hasMoreTrending: updatedMovies.length < 60 && movies.isNotEmpty,
+          trendingPage: paginatedResponse.page + 1,
+          hasMoreTrending: paginatedResponse.hasNextPage && updatedMovies.length < 60,
         );
       case Failure(message: final message):
         state = state.copyWith(

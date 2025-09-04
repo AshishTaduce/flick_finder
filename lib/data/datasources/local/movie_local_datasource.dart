@@ -1,6 +1,6 @@
 import '../../../core/services/hive_service.dart';
 import '../../../core/network/api_result.dart';
-import '../../models/hive/cached_movie_model.dart';
+import '../../models/movie_model.dart';
 import '../../models/hive/cached_movie_detail_model.dart';
 import '../../models/hive/cache_metadata_model.dart';
 
@@ -8,7 +8,7 @@ class MovieLocalDataSource {
   final HiveService _hiveService = HiveService.instance;
 
   // Movies CRUD operations
-  Future<ApiResult<List<CachedMovieModel>>> getMoviesByCategory(
+  Future<ApiResult<List<MovieModel>>> getMoviesByCategory(
     String category, {
     int page = 1,
     int limit = 20,
@@ -31,7 +31,7 @@ class MovieLocalDataSource {
               startIndex,
               endIndex > allMovies.length ? allMovies.length : endIndex,
             )
-          : <CachedMovieModel>[];
+          : <MovieModel>[];
 
       return Success(paginatedMovies);
     } catch (e) {
@@ -39,7 +39,7 @@ class MovieLocalDataSource {
     }
   }
 
-  Future<ApiResult<CachedMovieModel?>> getMovieById(int movieId) async {
+  Future<ApiResult<MovieModel?>> getMovieById(int movieId) async {
     try {
       final box = _hiveService.moviesBox;
       final movie = box.get(movieId.toString());
@@ -50,7 +50,7 @@ class MovieLocalDataSource {
   }
 
   Future<ApiResult<void>> saveMovies(
-    List<CachedMovieModel> movies,
+    List<MovieModel> movies,
     String category, {
     int? page,
   }) async {
@@ -59,7 +59,7 @@ class MovieLocalDataSource {
       final metadataBox = _hiveService.cacheMetadataBox;
 
       // Save movies
-      final movieMap = <String, CachedMovieModel>{};
+      final movieMap = <String, MovieModel>{};
       for (final movie in movies) {
         final updatedMovie = movie.copyWith(
           category: category,
@@ -89,7 +89,7 @@ class MovieLocalDataSource {
     }
   }
 
-  Future<ApiResult<void>> updateMovie(CachedMovieModel movie) async {
+  Future<ApiResult<void>> updateMovie(MovieModel movie) async {
     try {
       final box = _hiveService.moviesBox;
       final updatedMovie = movie.copyWith(lastUpdated: DateTime.now());
@@ -160,12 +160,13 @@ class MovieLocalDataSource {
   }
 
   // Search operations
-  Future<ApiResult<List<CachedMovieModel>>> searchMovies(String query) async {
+  Future<ApiResult<List<MovieModel>>> searchMovies(String query) async {
     try {
       final box = _hiveService.moviesBox;
       final searchQuery = query.toLowerCase();
       
       final results = box.values
+          .whereType<MovieModel>()
           .where((movie) =>
               movie.title.toLowerCase().contains(searchQuery) ||
               movie.description.toLowerCase().contains(searchQuery))
@@ -326,7 +327,7 @@ class MovieLocalDataSource {
       final staleMovieKeys = <String>[];
       for (final key in moviesBox.keys) {
         final movie = moviesBox.get(key);
-        if (movie != null && movie.isStale) {
+        if (movie?.isStale == true) {
           staleMovieKeys.add(key.toString());
         }
       }
@@ -336,7 +337,7 @@ class MovieLocalDataSource {
       final staleDetailKeys = <String>[];
       for (final key in detailsBox.keys) {
         final detail = detailsBox.get(key);
-        if (detail != null && detail.isStale) {
+        if (detail?.isStale == true) {
           staleDetailKeys.add(key.toString());
         }
       }

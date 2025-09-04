@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../data/models/hive/cached_movie_model.dart';
+import '../../data/models/movie_model.dart';
 import '../../data/models/hive/cached_movie_detail_model.dart';
 import '../../data/models/hive/cached_cast_model.dart';
 import '../../data/models/hive/cache_metadata_model.dart';
@@ -15,12 +15,12 @@ class HiveService {
   static HiveService get instance => _instance ??= HiveService._();
   HiveService._();
 
-  Box<CachedMovieModel>? _moviesBox;
+  Box<MovieModel>? _moviesBox;
   Box<CachedMovieDetailModel>? _movieDetailsBox;
   Box<CacheMetadataModel>? _cacheMetadataBox;
   Box<Map<String, dynamic>>? _userDataBox;
 
-  Box<CachedMovieModel> get moviesBox => _moviesBox!;
+  Box<MovieModel> get moviesBox => _moviesBox!;
   Box<CachedMovieDetailModel> get movieDetailsBox => _movieDetailsBox!;
   Box<CacheMetadataModel> get cacheMetadataBox => _cacheMetadataBox!;
   Box<Map<String, dynamic>> get userDataBox => _userDataBox!;
@@ -30,7 +30,7 @@ class HiveService {
 
     // Register adapters
     if (!Hive.isAdapterRegistered(0)) {
-      Hive.registerAdapter(CachedMovieModelAdapter());
+      Hive.registerAdapter(MovieModelAdapter());
     }
     if (!Hive.isAdapterRegistered(1)) {
       Hive.registerAdapter(CachedGenreModelAdapter());
@@ -46,7 +46,7 @@ class HiveService {
     }
 
     // Open boxes
-    _moviesBox = await Hive.openBox<CachedMovieModel>(_moviesBoxName);
+    _moviesBox = await Hive.openBox<MovieModel>(_moviesBoxName);
     _movieDetailsBox = await Hive.openBox<CachedMovieDetailModel>(_movieDetailsBoxName);
     _cacheMetadataBox = await Hive.openBox<CacheMetadataModel>(_cacheMetadataBoxName);
     _userDataBox = await Hive.openBox<Map<String, dynamic>>(_userDataBoxName);
