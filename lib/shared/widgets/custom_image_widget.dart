@@ -1,3 +1,4 @@
+import 'package:flick_finder/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_colors.dart';
@@ -56,7 +57,7 @@ class _CustomImageWidgetState extends State<CustomImageWidget> {
       setState(() {
         _retryCount++;
         // Force cache refresh by adding a timestamp parameter
-        _currentImageUrl = widget.imageUrl != null 
+        _currentImageUrl = widget.imageUrl != null
             ? '${widget.imageUrl}?retry=$_retryCount'
             : null;
       });
@@ -67,15 +68,7 @@ class _CustomImageWidgetState extends State<CustomImageWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    // Default placeholder
-    final defaultPlaceholder = widget.placeholder ?? Container(
-      color: theme.brightness == Brightness.dark
-          ? AppColors.darkSurfaceVariant
-          : AppColors.lightSurfaceVariant,
-      child: const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    final defaultPlaceholder = widget.placeholder ?? SkeletonLoader();
 
     // Default error widget with retry option
     final defaultErrorWidget = widget.errorWidget ?? Container(

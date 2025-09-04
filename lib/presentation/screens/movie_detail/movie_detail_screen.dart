@@ -12,12 +12,12 @@ import '../../../shared/theme/app_insets.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/custom_image_widget.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
-import '../home/widgets/horizontal_movie_list.dart';
 import '../../providers/movie_detail_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/watch_providers_dialog.dart';
 import '../../widgets/share_movie_dialog.dart';
 import '../../widgets/add_to_list_dialog.dart';
+import '../home/widgets/paginated_horizontal_movie_list.dart';
 import '../person_movies/person_movies_screen.dart';
 
 class MovieDetailScreen extends ConsumerStatefulWidget {
@@ -106,7 +106,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
             if (widget.movie.backdropPath != null)
               CustomImageWidget(
                 imageUrl:
-                    '${ApiConstants.imageBaseUrl}${widget.movie.backdropPath}',
+                '${ApiConstants.imageBaseUrl}${widget.movie.backdropPath}',
                 fit: BoxFit.cover,
                 errorWidget: Container(
                   color: theme.brightness == Brightness.dark
@@ -561,7 +561,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
     return Column(
       children: [
         const SizedBox(height: AppInsets.lg),
-        HorizontalMovieList(
+        PaginatedHorizontalMovieList(
           title: 'Similar Movies',
           movies: movieDetailState.similarMovies,
           isLoading: movieDetailState.isLoadingSimilar,

@@ -116,9 +116,7 @@ class _MovieCarouselState extends State<MovieCarousel> {
             Positioned.fill(
               child: Container(
                 color: Colors.black26,
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const SkeletonLoader(),
               ),
             ),
         ],

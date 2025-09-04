@@ -85,42 +85,6 @@ class _MovieCardState extends State<MovieCard> {
                           ],
                         ),
                       ),
-
-                // // Rating overlay
-                // if (widget.movie.rating > 0)
-                //   Positioned(
-                //     bottom: AppInsets.sm,
-                //     left: AppInsets.sm,
-                //     child: Container(
-                //       padding: const EdgeInsets.symmetric(
-                //         horizontal: AppInsets.sm,
-                //         vertical: AppInsets.xs,
-                //       ),
-                //       decoration: BoxDecoration(
-                //         color: Colors.black.withValues(alpha: 0.7),
-                //         borderRadius: BorderRadius.circular(AppInsets.radiusSm),
-                //       ),
-                //       child: Row(
-                //         mainAxisSize: MainAxisSize.min,
-                //         children: [
-                //           const Icon(
-                //             Icons.star,
-                //             color: Colors.amber,
-                //             size: 14,
-                //           ),
-                //           const SizedBox(width: 2),
-                //           Text(
-                //             widget.movie.rating.toStringAsFixed(1),
-                //             style: const TextStyle(
-                //               color: Colors.white,
-                //               fontSize: 12,
-                //               fontWeight: FontWeight.bold,
-                //             ),
-                //           ),
-                //         ],
-                //       ),
-                //     ),
-                //   ),
               ],
             ),
           ),

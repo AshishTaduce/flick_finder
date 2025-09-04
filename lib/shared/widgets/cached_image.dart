@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flick_finder/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
@@ -139,7 +140,7 @@ class _CachedImageState extends ConsumerState<CachedImage> {
       height: widget.height,
       color: Colors.grey[300],
       child: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
+        ? const SkeletonLoader()
         : const Center(
             child: Icon(
               Icons.image,
