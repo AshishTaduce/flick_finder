@@ -6,7 +6,7 @@ import '../../core/network/api_result.dart';
 import '../../data/datasources/local/movie_local_datasource.dart';
 import '../../data/datasources/remote/movie_remote_datasource.dart';
 import '../../data/models/movie_model.dart';
-import '../../data/models/hive/cached_movie_detail_model.dart';
+import '../../data/models/movie_detail_model.dart';
 
 class BackgroundSyncService {
   static BackgroundSyncService? _instance;
@@ -217,7 +217,7 @@ class BackgroundSyncService {
           };
 
         // Save to cache
-        final cachedDetail = CachedMovieDetailModel.fromApiResponse(
+        final cachedDetail = MovieDetailModel.fromApiResponse(
           detailModel.toJson(),
           castData,
         );

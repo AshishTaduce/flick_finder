@@ -1,7 +1,7 @@
 import '../../../core/services/hive_service.dart';
 import '../../../core/network/api_result.dart';
 import '../../models/movie_model.dart';
-import '../../models/hive/cached_movie_detail_model.dart';
+import '../../models/movie_detail_model.dart';
 import '../../models/hive/cache_metadata_model.dart';
 
 class MovieLocalDataSource {
@@ -111,7 +111,7 @@ class MovieLocalDataSource {
   }
 
   // Movie Details CRUD operations
-  Future<ApiResult<CachedMovieDetailModel?>> getMovieDetail(int movieId) async {
+  Future<ApiResult<MovieDetailModel?>> getMovieDetail(int movieId) async {
     try {
       final box = _hiveService.movieDetailsBox;
       final detail = box.get(movieId.toString());
@@ -121,7 +121,7 @@ class MovieLocalDataSource {
     }
   }
 
-  Future<ApiResult<void>> saveMovieDetail(CachedMovieDetailModel detail) async {
+  Future<ApiResult<void>> saveMovieDetail(MovieDetailModel detail) async {
     try {
       final box = _hiveService.movieDetailsBox;
       final metadataBox = _hiveService.cacheMetadataBox;
@@ -148,7 +148,7 @@ class MovieLocalDataSource {
     }
   }
 
-  Future<ApiResult<void>> updateMovieDetail(CachedMovieDetailModel detail) async {
+  Future<ApiResult<void>> updateMovieDetail(MovieDetailModel detail) async {
     try {
       final box = _hiveService.movieDetailsBox;
       final updatedDetail = detail.copyWith(lastUpdated: DateTime.now());
@@ -236,7 +236,7 @@ class MovieLocalDataSource {
     try {
       final detailResult = await getMovieDetail(movieId);
       
-      if (detailResult is Success<CachedMovieDetailModel?> && detailResult.data != null) {
+      if (detailResult is Success<MovieDetailModel?> && detailResult.data != null) {
         final detail = detailResult.data!;
         return Success(detail.needsRefresh);
       }

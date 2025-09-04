@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../data/models/movie_model.dart';
-import '../../data/models/hive/cached_movie_detail_model.dart';
-import '../../data/models/hive/cached_cast_model.dart';
+import '../../data/models/movie_detail_model.dart';
+import '../../data/models/cast_model.dart';
 import '../../data/models/hive/cache_metadata_model.dart';
 
 class HiveService {
@@ -16,12 +16,12 @@ class HiveService {
   HiveService._();
 
   Box<MovieModel>? _moviesBox;
-  Box<CachedMovieDetailModel>? _movieDetailsBox;
+  Box<MovieDetailModel>? _movieDetailsBox;
   Box<CacheMetadataModel>? _cacheMetadataBox;
   Box<Map<String, dynamic>>? _userDataBox;
 
   Box<MovieModel> get moviesBox => _moviesBox!;
-  Box<CachedMovieDetailModel> get movieDetailsBox => _movieDetailsBox!;
+  Box<MovieDetailModel> get movieDetailsBox => _movieDetailsBox!;
   Box<CacheMetadataModel> get cacheMetadataBox => _cacheMetadataBox!;
   Box<Map<String, dynamic>> get userDataBox => _userDataBox!;
 
@@ -33,13 +33,13 @@ class HiveService {
       Hive.registerAdapter(MovieModelAdapter());
     }
     if (!Hive.isAdapterRegistered(1)) {
-      Hive.registerAdapter(CachedGenreModelAdapter());
+      Hive.registerAdapter(GenreModelAdapter());
     }
     if (!Hive.isAdapterRegistered(2)) {
-      Hive.registerAdapter(CachedMovieDetailModelAdapter());
+      Hive.registerAdapter(MovieDetailModelAdapter());
     }
     if (!Hive.isAdapterRegistered(3)) {
-      Hive.registerAdapter(CachedCastModelAdapter());
+      Hive.registerAdapter(CastModelAdapter());
     }
     if (!Hive.isAdapterRegistered(4)) {
       Hive.registerAdapter(CacheMetadataModelAdapter());
@@ -47,7 +47,7 @@ class HiveService {
 
     // Open boxes
     _moviesBox = await Hive.openBox<MovieModel>(_moviesBoxName);
-    _movieDetailsBox = await Hive.openBox<CachedMovieDetailModel>(_movieDetailsBoxName);
+    _movieDetailsBox = await Hive.openBox<MovieDetailModel>(_movieDetailsBoxName);
     _cacheMetadataBox = await Hive.openBox<CacheMetadataModel>(_cacheMetadataBoxName);
     _userDataBox = await Hive.openBox<Map<String, dynamic>>(_userDataBoxName);
 
