@@ -144,7 +144,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         Expanded(
           child: PaginatedMovieGrid(
             movies: results,
-            crossAxisCount: 5,
+            crossAxisCount: 3,
             isLoadingMore: state.isLoadingMore,
             hasMorePages: state.hasMorePages,
             onLoadMore: () =>

@@ -44,7 +44,7 @@ class _MovieCardState extends State<MovieCard> {
         );
       },
       child: Hero(
-        tag: 'movie_poster_${widget.movie.id}',
+        tag: 'id_${widget.movie.id}',
         child: Container(
           width: widget.width,
           height: widget.height,
