@@ -114,7 +114,7 @@ lib/
 
 3. **Generate code**
    ```bash
-   flutter packages pub run build_runner build
+   dart packages pub run build_runner build
    ```
 
 4. **Configure API Key**
