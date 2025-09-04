@@ -6,10 +6,10 @@ class AppRoutes {
   static const String movieDetail = '/movie';
   static const String search = '/search';
   static const String profile = '/profile';
-  static const String watchlist = '/watchlist';
-  static const String favorites = '/favorites';
-  static const String ratedMovies = '/rated';
-  static const String settings = '/settings';
+  static const String watchlist = '/profile/watchlist';
+  static const String favorites = '/profile/favorites';
+  static const String ratedMovies = '/profile/rated';
+  static const String settings = '/profile/settings';
   static const String personMovies = '/person';
 
   // Route parameters

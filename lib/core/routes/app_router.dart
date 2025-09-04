@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/entities/cast.dart';
 import '../../presentation/providers/auth_provider.dart';
-import '../../presentation/providers/home_provider.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/movie_detail/movie_detail_screen.dart';
@@ -14,12 +13,8 @@ import '../../presentation/screens/watchlist/watchlist_screen.dart';
 import '../../presentation/screens/favorites/favorites_screen.dart';
 import '../../presentation/screens/rated/rated_movies_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
-import '../../presentation/screens/home/home_screen.dart';
-import '../../presentation/screens/search/search_screen.dart';
-import '../../presentation/screens/profile/profile_screen.dart';
-import '../../main.dart';
+import '../../presentation/screens/main/main_tab_screen.dart';
 import '../services/deeplink_service.dart';
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -82,45 +77,36 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       
-      // Main app shell with bottom navigation
-      ShellRoute(
-        navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) {
-          return MainScreen(child: child);
-        },
-        routes: [
-          GoRoute(
-            path: AppRoutes.home,
-            builder: (context, state) => const HomeScreenWrapper(),
-          ),
-          GoRoute(
-            path: AppRoutes.search,
-            builder: (context, state) => const SearchScreenWrapper(),
-          ),
-          GoRoute(
-            path: AppRoutes.profile,
-            builder: (context, state) => const ProfileScreen(),
-            routes: [
-              // Profile sub-routes - these will be full screen but maintain navigation stack
-              GoRoute(
-                path: 'watchlist',
-                builder: (context, state) => const WatchlistScreen(),
-              ),
-              GoRoute(
-                path: 'favorites',
-                builder: (context, state) => const FavoritesScreen(),
-              ),
-              GoRoute(
-                path: 'rated',
-                builder: (context, state) => const RatedMoviesScreen(),
-              ),
-              GoRoute(
-                path: 'settings',
-                builder: (context, state) => const SettingsScreen(),
-              ),
-            ],
-          ),
-        ],
+      // Main app with tab navigation
+      GoRoute(
+        path: AppRoutes.home,
+        builder: (context, state) => const MainTabScreen(initialIndex: 0),
+      ),
+      GoRoute(
+        path: AppRoutes.search,
+        builder: (context, state) => const MainTabScreen(initialIndex: 1),
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        builder: (context, state) => const MainTabScreen(initialIndex: 2),
+      ),
+      
+      // Profile sub-routes - these will be full screen
+      GoRoute(
+        path: '/profile/watchlist',
+        builder: (context, state) => const WatchlistScreen(),
+      ),
+      GoRoute(
+        path: '/profile/favorites',
+        builder: (context, state) => const FavoritesScreen(),
+      ),
+      GoRoute(
+        path: '/profile/rated',
+        builder: (context, state) => const RatedMoviesScreen(),
+      ),
+      GoRoute(
+        path: '/profile/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
       
       // Standalone routes (outside shell for full screen)
@@ -195,36 +181,3 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-// Wrapper classes for the main screens
-class HomeScreenWrapper extends ConsumerWidget {
-  const HomeScreenWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Ensure home data is loaded when navigating to home
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final homeState = ref.read(homeProvider);
-      if (homeState.popularMovies.isEmpty && 
-          homeState.nowPlayingMovies.isEmpty && 
-          homeState.trendingMovies.isEmpty && 
-          !homeState.isLoading) {
-        ref.read(homeProvider.notifier).loadAllMovies();
-      }
-    });
-    
-    return HomeScreen(
-      onNavigateToSearch: () {
-        context.go('/search');
-      },
-    );
-  }
-}
-
-class SearchScreenWrapper extends StatelessWidget {
-  const SearchScreenWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const SearchScreen();
-  }
-}

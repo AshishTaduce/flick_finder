@@ -105,7 +105,7 @@ class ProfileScreen extends ConsumerWidget {
                   subtitle: const Text('Movies you want to watch'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    context.go('/profile/watchlist');
+                    context.push('/profile/watchlist');
                   },
                 ),
           
@@ -115,7 +115,7 @@ class ProfileScreen extends ConsumerWidget {
                   subtitle: const Text('Movies you love'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    context.go('/profile/favorites');
+                    context.push('/profile/favorites');
                   },
                 ),
           
@@ -125,7 +125,7 @@ class ProfileScreen extends ConsumerWidget {
                   subtitle: const Text('Movies you\'ve rated'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    context.go('/profile/rated');
+                    context.push('/profile/rated');
                   },
                 ),
               ],
@@ -194,7 +194,7 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: const Text('Content preferences'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  context.go('/profile/settings');
+                  context.push('/profile/settings');
                 },
               ),
               const SizedBox(height: AppInsets.md),

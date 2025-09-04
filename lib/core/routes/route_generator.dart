@@ -1,3 +1,4 @@
+import 'package:flick_finder/presentation/screens/main/main_tab_screen.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/entities/cast.dart';
@@ -9,7 +10,6 @@ import '../../presentation/screens/watchlist/watchlist_screen.dart';
 import '../../presentation/screens/favorites/favorites_screen.dart';
 import '../../presentation/screens/rated/rated_movies_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
-import '../../main.dart';
 import 'app_routes.dart';
 
 class RouteGenerator {
@@ -30,9 +30,7 @@ class RouteGenerator {
 
       case AppRoutes.home:
         return MaterialPageRoute(
-          builder: (_) => const MainScreen(
-            child: Center(child: Text('Home - Use GoRouter instead')),
-          ),
+          builder: (_) => const MainTabScreen (),
           settings: settings,
         );
 
