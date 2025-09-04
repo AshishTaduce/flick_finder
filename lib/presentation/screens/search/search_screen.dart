@@ -23,12 +23,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final _debouncer = Debouncer(delay: const Duration(milliseconds: 700));
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFocusNode.addListener(_onFocusChanged);
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.removeListener(_onFocusChanged);
     _searchFocusNode.dispose();
     _debouncer.dispose();
     super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (_searchFocusNode.hasFocus && _searchController.text.isEmpty) {
+      ref.read(searchProvider.notifier).showSearchHistory();
+    } else {
+      ref.read(searchProvider.notifier).hideSearchHistory();
+    }
   }
 
   void _showFilterBottomSheet() {
@@ -38,6 +54,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => const FilterBottomSheet(),
     );
+  }
+
+  void _onSearchChanged(String query) {
+    _debouncer.call(() {
+      ref.read(searchProvider.notifier).updateQuery(query);
+    });
+  }
+
+  void _onHistoryItemSelected(String query) {
+    _searchController.text = query;
+    _searchFocusNode.unfocus();
+    ref.read(searchProvider.notifier).selectFromHistory(query);
+  }
+
+  void _onHistoryItemDeleted(String query) {
+    ref.read(searchProvider.notifier).removeFromSearchHistory(query);
   }
 
   @override
@@ -54,11 +86,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             SearchAppBar(
               controller: _searchController,
               focusNode: _searchFocusNode,
-              onChanged: (query) {
-                _debouncer.call(() {
-                  ref.read(searchProvider.notifier).updateQuery(query);
-                });
-              },
+              onChanged: _onSearchChanged,
               onFilterTap: _showFilterBottomSheet,
               hasActiveFilters: searchState.filters.hasActiveFilters,
               activeFilterCount: searchState.filters.activeFilterCount,
@@ -66,6 +94,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
             // Content
             Expanded(child: _buildContent(searchState, theme)),
+
             if (searchState.isLoadingMore)
               Center(
                 child: Padding(
@@ -80,6 +109,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildContent(SearchState state, ThemeData theme) {
+    // Show search history when focused and no query
+    if (state.showingHistory && state.searchHistory.isNotEmpty) {
+      return _buildSearchHistory(state.searchHistory, theme);
+    }
+
     if (state.query.isEmpty && !state.filters.hasActiveFilters) {
       return _buildEmptyState();
     }
@@ -152,6 +186,96 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSearchHistory(List<String> history, ThemeData theme) {
+    return Padding(
+      padding: AppInsets.screenPaddingHorizontal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with clear all option
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recent searches',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (history.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    ref.read(searchProvider.notifier).clearSearchHistory();
+                  },
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppInsets.sm,
+                      vertical: AppInsets.xs,
+                    ),
+                  ),
+                  child: Text(
+                    'Clear all',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.primaryRed,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppInsets.sm),
+
+          // History list
+          Expanded(
+            child: ListView.separated(
+              itemCount: history.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final query = history[index];
+                return _buildHistoryItem(query, theme);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(String query, ThemeData theme) {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: AppInsets.xs,
+        vertical: AppInsets.xs,
+      ),
+      leading: Icon(
+        Icons.history,
+        color: theme.brightness == Brightness.dark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary,
+        size: 20,
+      ),
+      title: Text(
+        query,
+        style: theme.textTheme.bodyMedium,
+      ),
+      trailing: IconButton(
+        icon: Icon(
+          Icons.close,
+          color: theme.brightness == Brightness.dark
+              ? AppColors.darkTextSecondary
+              : AppColors.lightTextSecondary,
+          size: 18,
+        ),
+        onPressed: () => _onHistoryItemDeleted(query),
+        constraints: const BoxConstraints(
+          minWidth: 32,
+          minHeight: 32,
+        ),
+        padding: EdgeInsets.zero,
+      ),
+      onTap: () => _onHistoryItemSelected(query),
     );
   }
 
@@ -334,10 +458,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildFilterChip(
-    String label,
-    ThemeData theme, {
-    required VoidCallback onRemove,
-  }) {
+      String label,
+      ThemeData theme, {
+        required VoidCallback onRemove,
+      }) {
     return Chip(
       label: Text(label),
       backgroundColor: AppColors.primaryRed.withValues(alpha: 0.1),

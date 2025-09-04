@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flick_finder/shared/theme/app_theme_extension.dart';
+import 'package:flick_finder/shared/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,10 +13,7 @@ import '../profile/profile_screen.dart';
 class MainTabScreen extends ConsumerStatefulWidget {
   final int initialIndex;
 
-  const MainTabScreen({
-    super.key,
-    this.initialIndex = 0,
-  });
+  const MainTabScreen({super.key, this.initialIndex = 0});
 
   @override
   ConsumerState<MainTabScreen> createState() => _MainTabScreenState();
@@ -37,7 +35,7 @@ class _MainTabScreenState extends ConsumerState<MainTabScreen>
     );
 
     _tabController.addListener(_handleTabChange);
-    
+
     // Load home data if needed
     _loadHomeDataIfNeeded();
   }
@@ -45,9 +43,9 @@ class _MainTabScreenState extends ConsumerState<MainTabScreen>
   void _loadHomeDataIfNeeded() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeState = ref.read(homeProvider);
-      if (homeState.popularMovies.isEmpty && 
-          homeState.nowPlayingMovies.isEmpty && 
-          homeState.trendingMovies.isEmpty && 
+      if (homeState.popularMovies.isEmpty &&
+          homeState.nowPlayingMovies.isEmpty &&
+          homeState.trendingMovies.isEmpty &&
           !homeState.isLoading) {
         ref.read(homeProvider.notifier).loadAllMovies();
       }
@@ -119,7 +117,6 @@ class _MainTabScreenState extends ConsumerState<MainTabScreen>
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  physics: const NeverScrollableScrollPhysics(), // Disable swipe
                   children: [
                     HomeScreen(
                       onNavigateToSearch: () {
@@ -145,7 +142,7 @@ class _MainTabScreenState extends ConsumerState<MainTabScreen>
         color: Theme.of(context).surfaceVariant.withAlpha(150),
         border: Border(
           top: BorderSide(
-            color: Theme.of(context).primaryColor.withAlpha(50),
+            color: Theme.of(context).surfaceVariant.withAlpha(150),
             width: 1,
           ),
         ),
@@ -159,28 +156,17 @@ class _MainTabScreenState extends ConsumerState<MainTabScreen>
             indicatorWeight: 3,
             indicatorSize: TabBarIndicatorSize.label,
             labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(150),
-            labelStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+            unselectedLabelColor: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.color?.withAlpha(150),
+            labelStyle: AppTypography.labelMedium.copyWith(
+              fontWeight: FontWeight.w700
             ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.normal,
-            ),
+            unselectedLabelStyle:  AppTypography.labelMedium,
             tabs: const [
-              Tab(
-                icon: Icon(Icons.home),
-                text: 'Home',
-              ),
-              Tab(
-                icon: Icon(Icons.search),
-                text: 'Search',
-              ),
-              Tab(
-                icon: Icon(Icons.person),
-                text: 'Profile',
-              ),
+              Tab(icon: Icon(Icons.home), text: 'Home'),
+              Tab(icon: Icon(Icons.search), text: 'Search'),
+              Tab(icon: Icon(Icons.person), text: 'Profile'),
             ],
           ),
         ),

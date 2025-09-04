@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/network/api_result.dart';
 import '../../core/services/connectivity_service.dart';
@@ -11,7 +11,6 @@ import '../../data/datasources/local/movie_local_datasource.dart';
 import 'movie_provider.dart';
 import 'connectivity_provider.dart';
 
-// Search State
 class SearchState {
   final String query;
   final List<Movie> searchResults;
@@ -26,6 +25,7 @@ class SearchState {
   final bool hasMorePages;
   final bool isOfflineSearch;
   final int totalResults;
+  final bool showingHistory;
 
   const SearchState({
     this.query = '',
@@ -41,6 +41,7 @@ class SearchState {
     this.hasMorePages = true,
     this.isOfflineSearch = false,
     this.totalResults = 0,
+    this.showingHistory = false,
   });
 
   SearchState copyWith({
@@ -57,6 +58,7 @@ class SearchState {
     bool? hasMorePages,
     bool? isOfflineSearch,
     int? totalResults,
+    bool? showingHistory,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -72,6 +74,7 @@ class SearchState {
       hasMorePages: hasMorePages ?? this.hasMorePages,
       isOfflineSearch: isOfflineSearch ?? this.isOfflineSearch,
       totalResults: totalResults ?? this.totalResults,
+      showingHistory: showingHistory ?? this.showingHistory,
     );
   }
 }
@@ -80,18 +83,102 @@ class SearchNotifier extends StateNotifier<SearchState> {
   final MovieRepository _repository;
   final MovieLocalDataSource _localDatasource;
   final ConnectivityService _connectivityService;
+  static const String _searchHistoryKey = 'search_history';
+  static const int _maxHistoryItems = 10;
 
-  SearchNotifier(this._repository, this._localDatasource, this._connectivityService) 
-      : super(const SearchState());
+  SearchNotifier(this._repository, this._localDatasource, this._connectivityService)
+      : super(const SearchState()) {
+    _loadSearchHistory();
+  }
+
+  // Load search history from SharedPreferences
+  Future<void> _loadSearchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getStringList(_searchHistoryKey) ?? [];
+      state = state.copyWith(searchHistory: historyJson);
+    } catch (e) {
+      // Handle error silently - search history is not critical
+      print('Error loading search history: $e');
+    }
+  }
+
+  // Save search history to SharedPreferences
+  Future<void> _saveSearchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_searchHistoryKey, state.searchHistory);
+    } catch (e) {
+      // Handle error silently - search history is not critical
+      print('Error saving search history: $e');
+    }
+  }
+
+  // Add query to search history
+  Future<void> _addToSearchHistory(String query) async {
+    if (query.trim().isEmpty) return;
+
+    final trimmedQuery = query.trim();
+    final updatedHistory = List<String>.from(state.searchHistory);
+
+    updatedHistory.remove(trimmedQuery);
+
+    updatedHistory.insert(0, trimmedQuery);
+
+    // Limit history size
+    if (updatedHistory.length > _maxHistoryItems) {
+      updatedHistory.removeRange(_maxHistoryItems, updatedHistory.length);
+    }
+
+    state = state.copyWith(searchHistory: updatedHistory);
+    await _saveSearchHistory();
+  }
+
+  Future<void> removeFromSearchHistory(String query) async {
+    final updatedHistory = List<String>.from(state.searchHistory);
+    updatedHistory.remove(query);
+    state = state.copyWith(searchHistory: updatedHistory);
+    await _saveSearchHistory();
+  }
+
+  Future<void> clearSearchHistory() async {
+    state = state.copyWith(searchHistory: []);
+    await _saveSearchHistory();
+  }
+
+  // Show search history (when search field is focused and empty)
+  void showSearchHistory() {
+    state = state.copyWith(showingHistory: true);
+  }
+
+  // Hide search history
+  void hideSearchHistory() {
+    state = state.copyWith(showingHistory: false);
+  }
+
+  // Select from search history
+  void selectFromHistory(String query) {
+    state = state.copyWith(
+      query: query,
+      showingHistory: false,
+      currentPage: 1,
+      hasMorePages: true,
+    );
+    _searchMovies(query, isNewSearch: true);
+  }
 
   void updateQuery(String query) {
     state = state.copyWith(
       query: query,
       currentPage: 1,
       hasMorePages: true,
+      showingHistory: false,
     );
+
     if (query.isNotEmpty) {
       _searchMovies(query, isNewSearch: true);
+      // Add to history when user actually searches (not on every character)
+      _addToSearchHistory(query);
     } else {
       // If no query, use discover API with current filters if any filters are active
       if (state.filters.hasActiveFilters) {
@@ -102,6 +189,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
           filteredResults: [],
           currentPage: 1,
           hasMorePages: true,
+          showingHistory: true, // Show history when query is empty
         );
       }
     }
@@ -115,7 +203,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
     }
 
     final isOnline = _connectivityService.isOnline;
-    
+
     // For offline search, use local cache
     if (!isOnline) {
       await _performOfflineSearch(query, isNewSearch: isNewSearch);
@@ -129,10 +217,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
     switch (result) {
       case Success(data: final paginatedResponse):
-        final updatedMovies = isNewSearch 
-            ? paginatedResponse.results 
+        final updatedMovies = isNewSearch
+            ? paginatedResponse.results
             : [...state.searchResults, ...paginatedResponse.results];
-        
+
         state = state.copyWith(
           searchResults: updatedMovies,
           filteredResults: updatedMovies,
@@ -144,7 +232,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
           isOfflineSearch: false,
         );
       case Failure():
-        // If online search fails, try offline fallback
+      // If online search fails, try offline fallback
         await _performOfflineSearch(query, isNewSearch: isNewSearch, showOfflineMessage: true);
     }
   }
@@ -155,17 +243,17 @@ class SearchNotifier extends StateNotifier<SearchState> {
       switch (result) {
         case Success(data: final cachedMovies):
           final movies = cachedMovies.map((cached) => cached.toEntity()).toList();
-          
+
           // Apply filters if active
           List<Movie> filteredMovies = movies;
           if (state.filters.hasActiveFilters) {
             filteredMovies = _applyFiltersToMovies(movies, state.filters);
           }
-          
-          final updatedMovies = isNewSearch 
-              ? filteredMovies 
+
+          final updatedMovies = isNewSearch
+              ? filteredMovies
               : [...state.searchResults, ...filteredMovies];
-          
+
           state = state.copyWith(
             searchResults: updatedMovies,
             filteredResults: updatedMovies,
@@ -198,15 +286,15 @@ class SearchNotifier extends StateNotifier<SearchState> {
         });
         if (!hasMatchingGenre) return false;
       }
-      
+
       // Apply rating filter
       if (filters.minRating > 0 && movie.rating < filters.minRating) {
         return false;
       }
-      
+
       // Apply year filter (simplified - would need release date parsing)
       // This is a basic implementation
-      
+
       return true;
     }).toList();
   }
@@ -219,7 +307,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
     }
 
     final isOnline = _connectivityService.isOnline;
-    
+
     // For offline discovery, use cached popular movies
     if (!isOnline) {
       await _performOfflineDiscovery(isNewSearch: isNewSearch);
@@ -230,10 +318,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
     switch (result) {
       case Success(data: final paginatedResponse):
-        final updatedMovies = isNewSearch 
-            ? paginatedResponse.results 
+        final updatedMovies = isNewSearch
+            ? paginatedResponse.results
             : [...state.searchResults, ...paginatedResponse.results];
-        
+
         state = state.copyWith(
           searchResults: updatedMovies,
           filteredResults: updatedMovies,
@@ -245,7 +333,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
           isOfflineSearch: false,
         );
       case Failure():
-        // If online discovery fails, try offline fallback
+      // If online discovery fails, try offline fallback
         await _performOfflineDiscovery(isNewSearch: isNewSearch, showOfflineMessage: true);
     }
   }
@@ -256,14 +344,14 @@ class SearchNotifier extends StateNotifier<SearchState> {
       switch (result) {
         case Success(data: final cachedMovies):
           final movies = cachedMovies.map((cached) => cached.toEntity()).toList();
-          
+
           // Apply filters
           final filteredMovies = _applyFiltersToMovies(movies, state.filters);
-          
-          final updatedMovies = isNewSearch 
-              ? filteredMovies 
+
+          final updatedMovies = isNewSearch
+              ? filteredMovies
               : [...state.searchResults, ...filteredMovies];
-          
+
           state = state.copyWith(
             searchResults: updatedMovies,
             filteredResults: updatedMovies,
@@ -292,7 +380,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
       currentPage: 1,
       hasMorePages: true,
     );
-    
+
     // Re-search with new filters
     if (state.query.isNotEmpty) {
       _searchMovies(state.query, isNewSearch: true);
@@ -315,7 +403,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
       currentPage: 1,
       hasMorePages: true,
     );
-    
+
     // Re-search without filters
     if (state.query.isNotEmpty) {
       _searchMovies(state.query, isNewSearch: true);
