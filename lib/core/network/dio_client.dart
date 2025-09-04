@@ -1,5 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:dio_smart_retry/dio_smart_retry.dart';
+import 'package:flutter/foundation.dart';
 import '../constants/api_constants.dart';
+import '../services/auth_service.dart';
+import '../services/settings_service.dart';
 
 class DioClient {
   static Dio? _instance;
@@ -10,29 +14,100 @@ class DioClient {
   }
 
   static Dio _createDio() {
-    final dio = Dio(BaseOptions(
-      baseUrl: ApiConstants.baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    ));
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: ApiConstants.baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
 
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        options.queryParameters['api_key'] = ApiConstants.apiKey;
-        handler.next(options);
-      },
-      onResponse: (response, handler) {
-        print('Response: ${response.statusCode} ${response.requestOptions.path}');
-        handler.next(response);
-      },
-      onError: (error, handler) {
-        print('Error: ${error.message}');
-        handler.next(error);
-      },
-    ));
+    // Add smart retry interceptor
+    dio.interceptors.add(
+      RetryInterceptor(
+        dio: dio,
+        logPrint: kDebugMode ? debugPrint : null,
+        retries: 3,
+        retryDelays: const [
+          Duration(seconds: 1),
+          Duration(seconds: 2),
+          Duration(seconds: 3),
+        ],
+        retryEvaluator: (error, attempt) {
+          // Retry on connection errors, timeouts, and 5xx server errors
+          if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.sendTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.connectionError) {
+            if (kDebugMode) {
+              debugPrint('Retrying request due to ${error.type} (attempt $attempt)');
+            }
+            return true;
+          }
+          
+          // Retry on server errors (5xx) and some 4xx errors
+          if (error.response?.statusCode != null) {
+            final statusCode = error.response!.statusCode!;
+            // Retry on server errors (5xx) and rate limiting (429)
+            if ((statusCode >= 500 && statusCode < 600) || statusCode == 429) {
+              if (kDebugMode) {
+                debugPrint('Retrying request due to status code $statusCode (attempt $attempt)');
+              }
+              return true;
+            }
+          }
+          
+          return false;
+        },
+      ),
+    );
+
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          options.queryParameters['api_key'] = ApiConstants.apiKey;
+          
+          // Add language and region preferences
+          final language = await SettingsService.instance.getLanguage();
+          final region = await SettingsService.instance.getRegion();
+          options.queryParameters['language'] = language;
+          options.queryParameters['region'] = region;
+          
+          // Add authentication token if available
+          final token = await AuthService.instance.getToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          
+          if (kDebugMode) {
+            debugPrint('Request: ${options.method} ${options.path}');
+            debugPrint('Language: $language, Region: $region');
+            if (token != null) {
+              debugPrint('Auth token included: ${token.substring(0, 10)}...');
+            }
+          }
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          if (kDebugMode) {
+            debugPrint(
+              'Response: ${response.statusCode} ${response.requestOptions.path}',
+            );
+          }
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          if (kDebugMode) {
+            debugPrint('Error: ${error.message}');
+            debugPrint('Error type: ${error.type}');
+            debugPrint('Status code: ${error.response?.statusCode}');
+            debugPrint('Request path: ${error.requestOptions.path}');
+          }
+          handler.next(error);
+        },
+      ),
+    );
 
     return dio;
   }

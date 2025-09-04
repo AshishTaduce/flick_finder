@@ -1,82 +1,130 @@
+import 'package:flick_finder/shared/theme/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../domain/entities/movie.dart';
+import '../../core/constants/api_constants.dart';
+import '../../domain/entities/movie.dart';
+import '../../presentation/screens/movie_detail/movie_detail_screen.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_insets.dart';
+import 'custom_image_widget.dart';
 
-class MovieCard extends StatelessWidget {
+class MovieCard extends StatefulWidget {
   final Movie movie;
+  final double? width;
+  final double? height;
+  final bool showAddToListButton;
 
   const MovieCard({
     super.key,
     required this.movie,
+    this.width,
+    this.height,
+    this.showAddToListButton = true,
   });
 
   @override
+  State<MovieCard> createState() => _MovieCardState();
+}
+
+class _MovieCardState extends State<MovieCard> {
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 3,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-              child: movie.fullPosterUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                imageUrl: movie.fullPosterUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.movie, size: 50),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.error, size: 50),
-                ),
-              )
-                  : Container(
-                color: Colors.grey[300],
-                child: const Icon(Icons.movie, size: 50),
-              ),
-            ),
+    final theme = Theme.of(context);
+    final imageUrl = widget.movie.posterPath != null
+        ? '${ApiConstants.imageBaseUrl}${widget.movie.posterPath}'
+        : null;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MovieDetailScreen(movie: widget.movie),
           ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    movie.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        movie.rating.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.bodySmall,
+        );
+      },
+      child: Hero(
+        tag: 'movie_poster_${widget.movie.id}',
+        child: Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppInsets.radiusMd),
+            color: theme.brightness == Brightness.dark
+                ? AppColors.darkSurfaceVariant
+                : AppColors.lightSurfaceVariant,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppInsets.radiusMd),
+            child: Stack(
+              children: [
+                // Movie poster or placeholder
+                imageUrl != null
+                    ? CustomImageWidget(
+                        imageUrl: imageUrl,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.movie, size: 40),
+                            const SizedBox(height: AppInsets.sm),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: AppInsets.sm),
+                              child: Text(
+                                widget.movie.title,
+                                style: AppTypography.headlineSmall,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+
+                // // Rating overlay
+                // if (widget.movie.rating > 0)
+                //   Positioned(
+                //     bottom: AppInsets.sm,
+                //     left: AppInsets.sm,
+                //     child: Container(
+                //       padding: const EdgeInsets.symmetric(
+                //         horizontal: AppInsets.sm,
+                //         vertical: AppInsets.xs,
+                //       ),
+                //       decoration: BoxDecoration(
+                //         color: Colors.black.withValues(alpha: 0.7),
+                //         borderRadius: BorderRadius.circular(AppInsets.radiusSm),
+                //       ),
+                //       child: Row(
+                //         mainAxisSize: MainAxisSize.min,
+                //         children: [
+                //           const Icon(
+                //             Icons.star,
+                //             color: Colors.amber,
+                //             size: 14,
+                //           ),
+                //           const SizedBox(width: 2),
+                //           Text(
+                //             widget.movie.rating.toStringAsFixed(1),
+                //             style: const TextStyle(
+                //               color: Colors.white,
+                //               fontSize: 12,
+                //               fontWeight: FontWeight.bold,
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

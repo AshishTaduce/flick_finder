@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/flick_finder.iml" filepath="$PROJECT_DIR$/.idea/flick_finder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/flick_finder_android.iml" filepath="$PROJECT_DIR$/android/flick_finder_android.iml" />
     </modules>
   </component>
 </project>

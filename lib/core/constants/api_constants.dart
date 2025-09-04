@@ -8,12 +8,50 @@ class ApiConstants {
   static const String topRatedMovies = '/movie/top_rated';
   static const String nowPlayingMovies = '/movie/now_playing';
   static const String upcomingMovies = '/movie/upcoming';
+  static const String trendingMovies = '/trending/movie/day';
   static const String searchMovies = '/search/movie';
   static const String searchMulti = '/search/multi';
   static const String discoverMovies = '/discover/movie';
   static const String discoverTv = '/discover/tv';
   static const String genreMovieList = '/genre/movie/list';
   static const String genreTvList = '/genre/tv/list';
+  static const String movieDetails = '/movie'; // /movie/{movie_id}
+  static const String movieCredits = '/movie'; // /movie/{movie_id}/credits
+  static const String similarMovies = '/movie'; // /movie/{movie_id}/similar
+  static const String personDetails = '/person'; // /person/{person_id}
+  static const String personMovies = '/person'; // /person/{person_id}/movie_credits
+
+  // Authentication endpoints
+  static const String createRequestToken = '/authentication/token/new';
+  static const String createSession = '/authentication/session/new';
+  static const String validateWithLogin = '/authentication/token/validate_with_login';
+  static const String deleteSession = '/authentication/session';
+  static const String accountDetails = '/account';
+  
+  // User-specific endpoints
+  static const String accountStates = '/movie'; // /movie/{movie_id}/account_states
+  static const String addToWatchlist = '/account/{account_id}/watchlist';
+  static const String addToFavorites = '/account/{account_id}/favorite';
+  static const String rateMovie = '/movie'; // /movie/{movie_id}/rating
+  static const String getWatchlist = '/account/{account_id}/watchlist/movies';
+  static const String getFavorites = '/account/{account_id}/favorite/movies';
+  static const String getRatedMovies = '/account/{account_id}/rated/movies';
+  
+  // Watch providers endpoint
+  static const String watchProviders = '/movie'; // /movie/{movie_id}/watch/providers
+  
+  // TMDB Lists endpoints
+  static const String createList = '/list';
+  static const String getList = '/list'; // /list/{list_id}
+  static const String addMovieToList = '/list'; // /list/{list_id}/add_item
+  static const String removeMovieFromList = '/list'; // /list/{list_id}/remove_item
+  static const String deleteList = '/list'; // /list/{list_id}
+  static const String getUserLists = '/account/{account_id}/lists';
+  
+  // Changes API endpoints
+  static const String movieChanges = '/movie/changes';
+  static const String personChanges = '/person/changes';
+  static const String tvChanges = '/tv/changes';
 
   // TMDB Genre IDs mapping
   static const Map<String, int> movieGenreIds = {

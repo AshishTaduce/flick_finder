@@ -1,12 +1,15 @@
-import 'package:flick_finder/presentation/screens/home/widgets/error_widget.dart';
-import 'package:flick_finder/presentation/screens/home/widgets/loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/widgets/movie_grid.dart';
-import '../../providers/movie_provider.dart';
+import '../../../shared/theme/app_insets.dart';
+import '../../providers/home_provider.dart';
+import '../../widgets/auth_status_widget.dart';
+import 'widgets/movie_carousel.dart';
+import 'widgets/paginated_horizontal_movie_list.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onNavigateToSearch;
+
+  const HomeScreen({super.key, this.onNavigateToSearch});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -16,48 +19,110 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch movies when screen loads
+    // Fetch all movies when screen loads
+    _loadMoviesIfNeeded();
+  }
+
+  void _loadMoviesIfNeeded() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(movieProvider.notifier).getPopularMovies();
+      final homeState = ref.read(homeProvider);
+      // Only load if we don't have any movies and aren't already loading
+      if (homeState.popularMovies.isEmpty && 
+          homeState.nowPlayingMovies.isEmpty && 
+          homeState.trendingMovies.isEmpty && 
+          !homeState.isLoading) {
+        ref.read(homeProvider.notifier).loadAllMovies();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final movieState = ref.watch(movieProvider);
+    final homeState = ref.watch(homeProvider);
+    
+    // Ensure data is loaded when the widget builds
+    ref.listen(homeProvider, (previous, next) {
+      // If we just cleared the state (like after auth change), reload data
+      if (previous != null && 
+          previous.popularMovies.isNotEmpty && 
+          next.popularMovies.isEmpty && 
+          !next.isLoading) {
+        Future.microtask(() => ref.read(homeProvider.notifier).loadAllMovies());
+      }
+    });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Popular Movies'),
-        elevation: 0,
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(movieProvider.notifier).getPopularMovies(),
-        child: _buildBody(movieState),
-      ),
-    );
-  }
+    return RefreshIndicator(
+      onRefresh: () => ref.read(homeProvider.notifier).refresh(),
+      child: SafeArea(
+        child: Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Auth Status
+                Padding(
+                  padding: const EdgeInsets.all(AppInsets.md),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Flick Finder',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const AuthStatusWidget(),
+                    ],
+                  ),
+                ),
+                
+                // Popular Movies Carousel
+                MovieCarousel(
+                  movies: homeState.popularMovies,
+                  isLoading: homeState.isLoadingPopular,
+                  error: homeState.popularError,
+                  onRetry: () =>
+                      ref.read(homeProvider.notifier).getPopularMovies(),
+                ),
 
-  Widget _buildBody(MovieState state) {
-    if (state.isLoading && state.movies.isEmpty) {
-      return const LoadingWidget();
-    }
+                const SizedBox(height: AppInsets.xl),
 
-    if (state.error != null && state.movies.isEmpty) {
-      return CustomErrorWidget(
-        message: state.error!,
-        onRetry: () => ref.read(movieProvider.notifier).getPopularMovies(),
-      );
-    }
+                // Now Playing Movies
+                PaginatedHorizontalMovieList(
+                  title: 'Now Playing',
+                  movies: homeState.nowPlayingMovies,
+                  isLoading: homeState.isLoadingNowPlaying,
+                  isLoadingMore: homeState.isLoadingMoreNowPlaying,
+                  hasMore: homeState.hasMoreNowPlaying,
+                  error: homeState.nowPlayingError,
+                  onRetry: () =>
+                      ref.read(homeProvider.notifier).getNowPlayingMovies(),
+                  onLoadMore: () =>
+                      ref.read(homeProvider.notifier).getNowPlayingMovies(loadMore: true),
+                ),
 
-    return Column(
-      children: [
-        if (state.isLoading)
-          const LinearProgressIndicator(),
-        Expanded(
-          child: MovieGrid(movies: state.movies),
+                const SizedBox(height: AppInsets.xl),
+
+                // Trending Movies
+                PaginatedHorizontalMovieList(
+                  title: 'Trending Today',
+                  movies: homeState.trendingMovies,
+                  isLoading: homeState.isLoadingTrending,
+                  isLoadingMore: homeState.isLoadingMoreTrending,
+                  hasMore: homeState.hasMoreTrending,
+                  error: homeState.trendingError,
+                  onRetry: () =>
+                      ref.read(homeProvider.notifier).getTrendingMovies(),
+                  onLoadMore: () =>
+                      ref.read(homeProvider.notifier).getTrendingMovies(loadMore: true),
+                ),
+
+                const SizedBox(height: AppInsets.xxl),
+              ],
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 }

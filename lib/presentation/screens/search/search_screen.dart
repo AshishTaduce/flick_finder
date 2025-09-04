@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/debouncer.dart';
 import '../../../domain/entities/filter_options.dart';
-import '../../../shared/widgets/movie_grid.dart';
+import '../../../shared/widgets/paginated_movie_grid.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../../providers/search_provider.dart';
 import '../home/widgets/error_widget.dart';
-import '../home/widgets/loading_widget.dart';
 import 'widgets/search_app_bar.dart';
 import 'widgets/filter_bottom_sheet.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -75,12 +75,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildContent(SearchState state, ThemeData theme) {
-    if (state.query.isEmpty) {
+    if (state.query.isEmpty && !state.filters.hasActiveFilters) {
       return _buildEmptyState();
     }
 
     if (state.isLoading && state.searchResults.isEmpty) {
-      return const LoadingWidget();
+      return const SearchResultSkeleton();
     }
 
     if (state.error != null && state.searchResults.isEmpty) {
@@ -135,7 +135,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
         // Results grid
         Expanded(
-          child: MovieGrid(movies: results),
+          child: PaginatedMovieGrid(
+            movies: results,
+            crossAxisCount: 3,
+            isLoadingMore: state.isLoadingMore,
+            hasMorePages: state.hasMorePages,
+            onLoadMore: () => ref.read(searchProvider.notifier).loadMoreResults(),
+          ),
         ),
       ],
     );
@@ -221,12 +227,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     // Category chips
     for (final category in filters.selectedCategories) {
-      chips.add(_buildFilterChip(category, theme));
+      chips.add(_buildFilterChip(
+        category, 
+        theme,
+        onRemove: () => ref.read(searchProvider.notifier).removeCategory(category),
+      ));
     }
 
     // Genre chips
     for (final genre in filters.selectedGenres) {
-      chips.add(_buildFilterChip(genre, theme));
+      chips.add(_buildFilterChip(
+        genre, 
+        theme,
+        onRemove: () => ref.read(searchProvider.notifier).removeGenre(genre),
+      ));
     }
 
     // Year range chip
@@ -234,28 +248,45 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       chips.add(_buildFilterChip(
         '${filters.yearRange.start.round()}-${filters.yearRange.end.round()}',
         theme,
+        onRemove: () => ref.read(searchProvider.notifier).clearYearRange(),
       ));
     }
 
     // Rating chip
     if (filters.minRating > 0) {
-      chips.add(_buildFilterChip('${filters.minRating}+ ⭐', theme));
+      chips.add(_buildFilterChip(
+        '${filters.minRating}+ ⭐', 
+        theme,
+        onRemove: () => ref.read(searchProvider.notifier).clearRating(),
+      ));
     }
 
     // Sort chip (only if not default)
     if (filters.sortBy != 'popularity.desc') {
       final sortName = _getSortDisplayName(filters.sortBy);
-      chips.add(_buildFilterChip('Sort: $sortName', theme));
+      chips.add(_buildFilterChip(
+        'Sort: $sortName', 
+        theme,
+        onRemove: () => ref.read(searchProvider.notifier).resetSort(),
+      ));
     }
 
     // Adult content chip
     if (filters.includeAdult) {
-      chips.add(_buildFilterChip('Adult Content', theme));
+      chips.add(_buildFilterChip(
+        'Adult Content', 
+        theme,
+        onRemove: () => ref.read(searchProvider.notifier).clearAdultContent(),
+      ));
     }
 
     // Region chip
     if (filters.region.isNotEmpty) {
-      chips.add(_buildFilterChip('Region: ${filters.region}', theme));
+      chips.add(_buildFilterChip(
+        'Region: ${filters.region}', 
+        theme,
+        onRemove: () => ref.read(searchProvider.notifier).clearRegion(),
+      ));
     }
 
     return Wrap(
@@ -279,7 +310,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return sortApiValues[apiValue] ?? 'Custom';
   }
 
-  Widget _buildFilterChip(String label, ThemeData theme) {
+  Widget _buildFilterChip(String label, ThemeData theme, {required VoidCallback onRemove}) {
     return Chip(
       label: Text(label),
       backgroundColor: AppColors.primaryRed.withValues(alpha: 0.1),
@@ -291,10 +322,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         size: 16,
         color: AppColors.primaryRed,
       ),
-      onDeleted: () {
-        // Handle individual filter removal
-        ref.read(searchProvider.notifier).clearFilters();
-      },
+      onDeleted: onRemove,
     );
   }
 }
