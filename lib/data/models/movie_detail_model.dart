@@ -121,7 +121,12 @@ class MovieDetailModel extends HiveObject {
   factory MovieDetailModel.fromJson(Map<String, dynamic> json) =>
       _$MovieDetailModelFromJson(json);
   
-  Map<String, dynamic> toJson() => _$MovieDetailModelToJson(this);
+  Map<String, dynamic> toJson() {
+    final json = _$MovieDetailModelToJson(this);
+    // Ensure genres are properly serialized to JSON
+    json['genres'] = genres.map((e) => e.toJson()).toList();
+    return json;
+  }
 
   // Factory for creating from API response with cast data
   factory MovieDetailModel.fromApiResponse(

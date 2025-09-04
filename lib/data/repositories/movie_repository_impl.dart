@@ -183,7 +183,6 @@ class MovieRepositoryImpl implements MovieRepository {
   @override
   Future<ApiResult<MovieDetail>> getMovieDetails(int movieId) async {
     try {
-      // 1. Always return cached detail first (if available)
       final cachedResult = await _localDataSource.getMovieDetail(movieId);
 
       MovieDetailModel? cachedDetail;
@@ -192,18 +191,15 @@ class MovieRepositoryImpl implements MovieRepository {
         cachedDetail = cachedResult.data!;
       }
 
-      // 2. Check if we need to refresh
       final isStaleResult = await _localDataSource.isMovieDetailStale(movieId);
       final needsRefresh = isStaleResult is Success<bool>
           ? isStaleResult.data
           : true;
 
-      // 3. If cache is fresh, return cached data
       if (!needsRefresh && cachedDetail != null) {
         return Success(cachedDetail.toEntity());
       }
 
-      // 4. If we have cached data, check for changes first
       if (cachedDetail != null && !cachedDetail.isStale) {
         final hasChanges = await _checkForMovieChanges(movieId, cachedDetail);
         if (!hasChanges) {
@@ -219,7 +215,7 @@ class MovieRepositoryImpl implements MovieRepository {
       final creditsResult = await _remoteDataSource.getMovieCredits(movieId);
 
       if (detailResult is Success) {
-        final MovieDetailModel detailModel =
+        MovieDetailModel detailModel =
             (detailResult as Success<MovieDetailModel>).data;
         if (creditsResult is Success) {
           final CreditsResponseModel creditsModel =
@@ -227,9 +223,11 @@ class MovieRepositoryImpl implements MovieRepository {
           // Save to cache with cast
           await _saveMovieDetailToCache(
             detailModel.toJson(),
-            creditsModel.cast
-                .map<Map<String, dynamic>>((c) => c.toJson())
+            creditsModel.cast.map<Map<String, dynamic>>((c) => c.toJson())
                 .toList(),
+          );
+          detailModel = detailModel.copyWith(
+            cast: creditsModel.cast,
           );
           return Success(detailModel.toEntity());
         } else {
