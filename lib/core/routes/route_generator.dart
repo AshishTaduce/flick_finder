@@ -39,7 +39,7 @@ class RouteGenerator {
         return MaterialPageRoute(
           builder: (context) => LoginScreen(
             onLoginSuccess: onLoginSuccess ?? () {
-              // Default behavior: do nothing, let the calling code handle navigation
+
             },
           ),
           settings: settings,

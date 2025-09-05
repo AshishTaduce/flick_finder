@@ -52,13 +52,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        String errorMessage = 'Login failed';
+        String errorMessage = e.toString();
         if (e.toString().contains('Invalid username or password')) {
           errorMessage = 'Invalid username or password';
         } else if (e.toString().contains('network')) {
           errorMessage = 'Network error. Please check your connection.';
         }
-        
         SnackbarUtils.showError(
           context,
           errorMessage,

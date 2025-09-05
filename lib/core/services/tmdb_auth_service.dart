@@ -79,20 +79,16 @@ class TmdbAuthService {
     required String password,
   }) async {
     try {
-      // Step 1: Create request token
       final requestToken = await createRequestToken();
       
-      // Step 2: Validate with login
       final validatedToken = await validateWithLogin(
         username: username,
         password: password,
         requestToken: requestToken,
       );
       
-      // Step 3: Create session
       final sessionId = await createSession(validatedToken);
       
-      // Get account details
       final accountDetails = await getAccountDetails(sessionId);
       
       return {
